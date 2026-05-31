@@ -1,0 +1,25 @@
+THÔNG BÁO HOÀN TIỀN — Nhân Sinh Quan
+
+Xin chào,
+
+Đơn hàng {{ ref_code }} của bạn đã được hoàn tiền thành công.
+
+Chi tiết:
+- Mã đơn hàng : {{ ref_code }}
+- Số tiền hoàn : {{ total_amount_vnd }} VNĐ
+- Thời gian    : {{ refunded_at }}
+- Lý do        : {{ reason }}
+
+Tiền sẽ về tài khoản ngân hàng của bạn trong 3–5 ngày làm việc.
+
+Nếu sau 5 ngày bạn chưa nhận được tiền, vui lòng liên hệ:
+  Email : support@nhansinhquan.vn
+  Zalo  : https://zalo.me/nhansinhquan
+
+Xem chi tiết đơn: {{ frontend_url }}/my-account/orders/{{ order_id }}
+
+Cảm ơn bạn đã tin tưởng sử dụng dịch vụ của Nhân Sinh Quan.
+
+---
+© Nhân Sinh Quan · https://nhansinhquan.vn
+Huỷ đăng ký nhận email: {{ frontend_url or 'https://nhansinhquan.vn' }}/my-account/settings

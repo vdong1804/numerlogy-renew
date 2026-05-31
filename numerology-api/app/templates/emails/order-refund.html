@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block subject %}Hoàn tiền đơn hàng {{ ref_code }} — Nhân Sinh Quan{% endblock %}
+{% block content %}
+  <h1>Thông báo hoàn tiền</h1>
+  <p>Xin chào,</p>
+  <p>Đơn hàng <strong>{{ ref_code }}</strong> của bạn đã được hoàn tiền thành công.</p>
+  <table class="meta-table">
+    <tr><td>Mã đơn hàng</td><td><strong>{{ ref_code }}</strong></td></tr>
+    <tr><td>Số tiền hoàn</td><td><strong>{{ total_amount_vnd }} ₫</strong></td></tr>
+    <tr><td>Thời gian xử lý</td><td>{{ refunded_at }}</td></tr>
+    <tr><td>Lý do</td><td>{{ reason }}</td></tr>
+  </table>
+  <p>Tiền sẽ được hoàn về tài khoản ngân hàng của bạn trong <strong>3–5 ngày làm việc</strong> tùy theo ngân hàng xử lý.</p>
+  <p>Nếu sau 5 ngày bạn chưa nhận được tiền, vui lòng liên hệ hỗ trợ:</p>
+  <ul style="font-size:15px; line-height:1.8;">
+    <li>Email: <a href="mailto:support@nhansinhquan.vn">support@nhansinhquan.vn</a></li>
+    <li>Zalo: <a href="https://zalo.me/nhansinhquan">Nhân Sinh Quan</a></li>
+  </ul>
+  <p><a class="btn" href="{{ frontend_url or 'https://nhansinhquan.vn' }}/my-account/orders/{{ order_id }}">Xem chi tiết đơn</a></p>
+  <p style="color:#6b7280; font-size:13px;">Cảm ơn bạn đã tin tưởng sử dụng dịch vụ của Nhân Sinh Quan.</p>
+{% endblock %}

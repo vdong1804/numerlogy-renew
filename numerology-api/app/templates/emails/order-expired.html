@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block subject %}Đơn hàng {{ ref_code }} đã hết hạn{% endblock %}
+{% block content %}
+  <h1>Đơn hàng đã hết hạn</h1>
+  <p>Đơn <strong>{{ ref_code }}</strong> đã quá thời gian thanh toán 30 phút và được hủy tự động.</p>
+  <p>Nếu bạn vẫn muốn mua, vui lòng tạo đơn mới:</p>
+  <p><a class="btn" href="{{ frontend_url or 'https://nhansinhquan.vn' }}/shop">Quay lại cửa hàng</a></p>
+{% endblock %}

@@ -1,0 +1,14 @@
+{% extends "reports/base_report.html" %}
+{% block title %}Báo cáo Mini (Miễn phí){% endblock %}
+{% block content %}
+    <h2>Báo cáo Mini – Khám phá Số Chủ Đạo của bạn</h2>
+    <p>Đây là báo cáo xem thử miễn phí. Để xem đầy đủ phân tích các chỉ số khác,
+       bạn có thể mua các báo cáo lẻ hoặc đăng ký gói thuê bao trên website.</p>
+    {% for code, rows in content.items() %}
+        <h2>{{ code|replace('_', ' ')|title }}</h2>
+        {% for row in rows %}
+            <h3>{{ row.title or row.code }}</h3>
+            <div>{{ row.content|safe }}</div>
+        {% endfor %}
+    {% endfor %}
+{% endblock %}

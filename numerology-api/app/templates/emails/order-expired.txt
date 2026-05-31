@@ -1,0 +1,10 @@
+ĐƠN HÀNG ĐÃ HẾT HẠN — Nhân Sinh Quan
+
+Đơn hàng {{ ref_code }} đã quá thời gian thanh toán 30 phút và được hủy tự động.
+
+Nếu bạn vẫn muốn mua, vui lòng tạo đơn mới:
+{{ frontend_url or 'https://nhansinhquan.vn' }}/shop
+
+---
+© Nhân Sinh Quan · https://nhansinhquan.vn
+Huỷ đăng ký nhận email: {{ frontend_url or 'https://nhansinhquan.vn' }}/my-account/settings

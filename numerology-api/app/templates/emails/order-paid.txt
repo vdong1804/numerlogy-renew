@@ -1,0 +1,25 @@
+THANH TOÁN THÀNH CÔNG — Nhân Sinh Quan
+
+Cảm ơn bạn đã thanh toán!
+
+Đơn hàng {{ ref_code }} đã được xác nhận.
+
+Chi tiết:
+- Mã đơn hàng : {{ ref_code }}
+- Tổng tiền   : {{ total_amount_vnd }} VNĐ
+- Phương thức : {{ payment_method or "SePay" }}
+
+Xem chi tiết đơn: {{ frontend_url }}/my-account/orders/{{ order_id }}
+
+{% if reports %}
+TẢI BÁO CÁO PDF (link có hiệu lực 7 ngày, không cần đăng nhập):
+{% for r in reports %}
+  - {{ r.name or 'Báo cáo #' ~ r.report_id }}: {{ base_url }}/api/my/reports/{{ r.report_id }}/download?token={{ r.signed_token }}
+{% endfor %}
+{% else %}
+Tải PDF tại: {{ frontend_url }}/my-account/reports (cần đăng nhập)
+{% endif %}
+
+---
+© Nhân Sinh Quan · https://nhansinhquan.vn
+Huỷ đăng ký nhận email: {{ frontend_url or 'https://nhansinhquan.vn' }}/my-account/settings

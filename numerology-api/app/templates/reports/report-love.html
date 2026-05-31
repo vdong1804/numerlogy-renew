@@ -1,0 +1,13 @@
+{% extends "reports/base_report.html" %}
+{% block title %}Báo cáo Tình duyên{% endblock %}
+{% block content %}
+    <h2>Phân tích về Tình duyên và Mối quan hệ</h2>
+    {% for code, rows in content.items() %}
+        <div class="new-page"></div>
+        <h2>{{ code|replace('_', ' ')|title }}</h2>
+        {% for row in rows %}
+            <h3>{{ row.title or row.code }}</h3>
+            <div>{{ row.content|safe }}</div>
+        {% endfor %}
+    {% endfor %}
+{% endblock %}

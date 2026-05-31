@@ -1,0 +1,14 @@
+CHÀO MỪNG ĐẾN VỚI NHÂN SINH QUAN
+
+Xin chào {{ name or "bạn" }}!
+
+Cảm ơn bạn đã đăng ký Nhân Sinh Quan — nền tảng phân tích Thần Số Học.
+
+Chúng tôi đã chuẩn bị một báo cáo Mini miễn phí cho bạn. Đăng nhập để khám phá:
+{{ frontend_url or 'https://nhansinhquan.vn' }}/my-account
+
+Nếu cần hỗ trợ, trả lời email này — chúng tôi luôn sẵn sàng.
+
+---
+© Nhân Sinh Quan · https://nhansinhquan.vn
+Huỷ đăng ký nhận email: {{ frontend_url or 'https://nhansinhquan.vn' }}/my-account/settings

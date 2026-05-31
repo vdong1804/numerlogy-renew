@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block subject %}Thanh toán thành công — đơn {{ ref_code }}{% endblock %}
+{% block content %}
+  <h1>Cảm ơn bạn đã thanh toán</h1>
+  <p>Đơn hàng <strong>{{ ref_code }}</strong> đã được xác nhận.</p>
+  <table class="meta-table">
+    <tr><td>Tổng tiền</td><td><strong>{{ total_amount_vnd }} ₫</strong></td></tr>
+    <tr><td>Phương thức</td><td>{{ payment_method or "SePay" }}</td></tr>
+  </table>
+  <p><a class="btn" href="{{ frontend_url or 'https://nhansinhquan.vn' }}/my-account/orders/{{ order_id }}">Xem chi tiết đơn</a></p>
+  {% if reports %}
+  <p><strong>Tải báo cáo PDF của bạn (link có hiệu lực 7 ngày, không cần đăng nhập):</strong></p>
+  <ul style="padding-left:20px; line-height:2;">
+    {% for r in reports %}
+    <li><a href="{{ base_url }}/api/my/reports/{{ r.report_id }}/download?token={{ r.signed_token }}">{{ r.name or 'Báo cáo #' ~ r.report_id }}</a></li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p>Bạn có thể tải PDF tại mục <a href="{{ frontend_url or 'https://nhansinhquan.vn' }}/my-account/reports">Báo cáo của tôi</a> sau khi đăng nhập.</p>
+  {% endif %}
+{% endblock %}

@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block subject %}Chào mừng đến với Nhân Sinh Quan{% endblock %}
+{% block content %}
+  <h1>Xin chào {{ name or "bạn" }}!</h1>
+  <p>Cảm ơn bạn đã đăng ký Nhân Sinh Quan — nền tảng phân tích Thần Số Học.</p>
+  <p>Chúng tôi đã chuẩn bị một báo cáo Mini miễn phí cho bạn. Đăng nhập để khám phá:</p>
+  <p><a class="btn" href="{{ frontend_url or 'https://nhansinhquan.vn' }}/my-account">Vào tài khoản</a></p>
+  <p>Nếu cần hỗ trợ, trả lời email này — chúng tôi luôn sẵn sàng.</p>
+{% endblock %}

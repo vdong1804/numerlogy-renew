@@ -1,0 +1,270 @@
+<html>
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto+Serif" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Roboto+Serif:ital,wght@0,400;0,500;0,600;0,700;1,500&display=swap"
+        rel="stylesheet" />
+    <style type="text/css">
+        :root {
+            --default-color: #002060;
+        }
+
+        html {
+            font-size: 62.5%;
+            box-sizing: border-box;
+        }
+
+        @page {
+            @top-left {
+                color: red;
+            }
+        }
+
+        body {
+            font-family: "Roboto Serif", serif;
+            color: #002060;
+            font-size: 2rem;
+            font-weight: 400;
+        }
+
+        h1, h2, h3, h4 { line-height: 1.4; }
+        h1 { font-size: 2.8rem; }
+        h2 { font-size: 2.4rem; }
+        h3 { font-size: 2rem; }
+        h4 { font-size: 1.8rem; }
+        h5 { font-size: 1.8rem; }
+
+        a { text-decoration: none; color: inherit; }
+
+        p { font-size: 2rem; line-height: 2.8rem; text-align: justify; }
+
+        li { list-style-type: none; }
+        ol li { list-style-type: decimal; }
+
+        img { max-width: 100%; height: auto; }
+
+        table, td, th { border: 1px solid; text-align: center; }
+        table { width: 100%; border-collapse: collapse; }
+        .table-content td { padding: 1rem; }
+        .table-info td { font-size: 2.6rem; }
+        .table-search td { border: none; border-bottom: 1px solid; font-size: 2.4rem; }
+        table.table-search { border: none; }
+        .table-search td:first-child { text-align: left; }
+
+        .title-content { font-weight: 700; text-transform: uppercase; text-align: center; }
+        .new-page { page-break-before: always; }
+        .text-birth span { line-height: 1.6 }
+        .mt-10px { margin-top: 1rem; }
+        .mt-30px { margin-top: 3rem; }
+        .my-30px { margin: 3rem 0; }
+        .my-80px { margin: 8rem 0; }
+
+        .page-banner-area {
+            width: 100%;
+            background-image: url("file://{{ base_dir }}/staticfiles/images/report/page_layout.png") !important;
+            background-size: 100% 100%;
+            background-repeat: no-repeat;
+            height: 100%;
+            page-break-before: always;
+        }
+
+        .content {
+            max-width: 890px;
+            padding-left: 70px;
+            padding-right: 50px;
+            padding-top: 100px;
+        }
+
+        .color-white { color: #fff; }
+        .color-black { color: #525659; }
+
+        .name {
+            position: absolute;
+            font-size: 15px;
+            padding-top: 60px;
+            text-transform: uppercase;
+            font-weight: 600;
+            opacity: 0.7;
+            width: 100%;
+            text-align: center;
+        }
+
+        .relative { position: relative; }
+
+        .main_number { position: absolute; left: 49%; top: 21%; color: white; font-weight: bold; }
+        .development_number { position: absolute; left: 74%; top: 28.5%; color: white; font-weight: bold; }
+        .mission_number { position: absolute; left: 74%; top: 42.5%; color: white; font-weight: bold; }
+        .part { position: absolute; left: 49.5%; top: 52%; color: white; font-weight: bold; }
+        .execution_number { position: absolute; left: 23.5%; top: 42.5%; color: white; font-weight: bold; }
+        .souls_number { position: absolute; left: 23.5%; top: 28.5%; color: white; font-weight: bold; }
+
+        .tuoi_dinh_cao_1 { position: absolute; left: 34%; top: 59.3%; color: white; font-weight: bold; }
+        .tuoi_dinh_cao_2 { position: absolute; left: 50%; top: 59.3%; color: white; font-weight: bold; }
+        .tuoi_dinh_cao_3 { position: absolute; left: 67%; top: 59.3%; color: white; font-weight: bold; }
+        .tuoi_dinh_cao_4 { position: absolute; left: 82%; top: 59.3%; color: white; font-weight: bold; }
+
+        .dinh_cao_1 { position: absolute; left: 34%; top: 62.3%; color: white; font-weight: bold; }
+        .dinh_cao_2 { position: absolute; left: 50%; top: 62.3%; color: white; font-weight: bold; }
+        .dinh_cao_3 { position: absolute; left: 67%; top: 62.3%; color: white; font-weight: bold; }
+        .dinh_cao_4 { position: absolute; left: 82%; top: 62.3%; color: white; font-weight: bold; }
+
+        .thu_thach_1 { position: absolute; left: 34%; top: 65.3%; color: white; font-weight: bold; }
+        .thu_thach_2 { position: absolute; left: 50%; top: 65.3%; color: white; font-weight: bold; }
+        .thu_thach_3 { position: absolute; left: 67%; top: 65.3%; color: white; font-weight: bold; }
+        .thu_thach_4 { position: absolute; left: 82%; top: 65.3%; color: white; font-weight: bold; }
+
+        .so_ngay_sinh { position: absolute; left: 23%; top: 80%; color: white; font-weight: bold; }
+        .so_thai_do { position: absolute; left: 49%; top: 80%; color: white; font-weight: bold; }
+        .so_nhan_cach { position: absolute; left: 75.5%; top: 80%; color: white; font-weight: bold; }
+        .so_noi_cam { position: absolute; left: 23%; top: 86.3%; color: white; font-weight: bold; }
+        .so_can_bang { position: absolute; left: 49%; top: 86.3%; color: white; font-weight: bold; }
+        .so_thieu { position: absolute; left: 75.5%; top: 86.3%; color: white; font-weight: bold; }
+    </style>
+</head>
+
+<body>
+    <div class="relative">
+        <span style="position: absolute; top: 208px; left: 60px; font-size: 18px; color: #fff; font-weight: 500;">{{ name }}</span>
+        <span style="position: absolute; top: 241px; left: 60px; font-size: 18px; color: #fff; font-weight: 500;">{{ birth_day_text }}</span>
+
+        <span class="main_number">{{ so_chu_dao }}</span>
+        <span class="development_number">{{ so_truong_thanh }}</span>
+        <span class="mission_number">{{ so_su_menh }}</span>
+        <span class="part">{{ stages }}</span>
+        <span class="execution_number">{{ so_thuc_thi }}</span>
+        <span class="souls_number">{{ so_linh_hon }}</span>
+
+        <span class="tuoi_dinh_cao_1">{{ tuoi_dinh_cao_1 }}</span>
+        <span class="tuoi_dinh_cao_2">{{ tuoi_dinh_cao_2 }}</span>
+        <span class="tuoi_dinh_cao_3">{{ tuoi_dinh_cao_3 }}</span>
+        <span class="tuoi_dinh_cao_4">{{ tuoi_dinh_cao_4 }}</span>
+
+        <span class="dinh_cao_1">{{ dinh_cao_1 }}</span>
+        <span class="dinh_cao_2">{{ dinh_cao_2 }}</span>
+        <span class="dinh_cao_3">{{ dinh_cao_3 }}</span>
+        <span class="dinh_cao_4">{{ dinh_cao_4 }}</span>
+
+        <span class="thu_thach_1">{{ thu_thach_1 }}</span>
+        <span class="thu_thach_2">{{ thu_thach_2 }}</span>
+        <span class="thu_thach_3">{{ thu_thach_3 }}</span>
+        <span class="thu_thach_4">{{ thu_thach_4 }}</span>
+
+        <span class="so_ngay_sinh">{{ so_ngay_sinh }}</span>
+        <span class="so_thai_do">{{ so_thai_do }}</span>
+        <span class="so_nhan_cach">{{ so_nhan_cach }}</span>
+        <span class="so_noi_cam">{{ so_noi_cam }}</span>
+        <span class="so_can_bang">{{ so_can_bang }}</span>
+        <span class="so_thieu">{{ so_thieu }}</span>
+
+        <img src="file://{{ base_dir }}/staticfiles/images/report/page_8.jpg">
+    </div>
+
+    {% if main_number_data %}
+    <div class="page-banner-area">
+        <div class="content">
+            <h2 class="title-content color-white">SỐ CHỦ ĐẠO {{ so_chu_dao }}</h2>
+            <p class="color-white">{{ main_number_data.content | safe }}</p>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if mission_number %}
+    <div class="page-banner-area">
+        <div class="content">
+            <h2 class="title-content color-white">SỐ SỨ MỆNH {{ so_su_menh }}</h2>
+            <p class="color-white">{{ mission_number.content | safe }}</p>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if souls_number %}
+    <div class="page-banner-area">
+        <div class="content">
+            <h2 class="title-content color-white">SỐ LINH HỒN {{ so_linh_hon }}</h2>
+            <p class="color-white">{{ souls_number.content | safe }}</p>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if execution_number %}
+    <div class="page-banner-area">
+        <div class="content">
+            <h2 class="title-content color-white">SỐ THỰC THI {{ so_thuc_thi }}</h2>
+            <p class="color-white">{{ execution_number.content | safe }}</p>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if two_first_phone %}
+    <div class="page-banner-area">
+        <div class="content">
+            <h2 class="title-content color-white">SỐ ĐIỆN THOẠI</h2>
+            <p class="color-white">{{ two_first_phone.content | safe }}</p>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if two_last_phone and two_last_phone != two_first_phone %}
+    <div class="page-banner-area">
+        <div class="content">
+            <p class="color-white">{{ two_last_phone.content | safe }}</p>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if stages_of_life_1 %}
+    <div class="page-banner-area">
+        <div class="content">
+            <h2 class="title-content color-white">CHẶNG ĐỜI 1</h2>
+            <p class="color-white">{{ stages_of_life_1.content | safe }}</p>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if stages_of_life_2 %}
+    <div class="page-banner-area">
+        <div class="content">
+            <h2 class="title-content color-white">CHẶNG ĐỜI 2</h2>
+            <p class="color-white">{{ stages_of_life_2.content | safe }}</p>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if stages_of_life_3 %}
+    <div class="page-banner-area">
+        <div class="content">
+            <h2 class="title-content color-white">CHẶNG ĐỜI 3</h2>
+            <p class="color-white">{{ stages_of_life_3.content | safe }}</p>
+        </div>
+    </div>
+    {% endif %}
+
+    {% for pattern in ['123','147','159','258','357','369','456','789'] %}
+    {% set chart = context['char_birth_day_all_' ~ pattern] if 'char_birth_day_all_' ~ pattern in context else none %}
+    {% if chart %}
+    <div class="page-banner-area">
+        <div class="content">
+            <h2 class="title-content color-white">BIỂU ĐỒ {{ pattern }}</h2>
+            <p class="color-white">{{ chart.content | safe }}</p>
+        </div>
+    </div>
+    {% endif %}
+    {% endfor %}
+
+    {% if miss_number %}
+    <div class="page-banner-area">
+        <div class="content">
+            <h2 class="title-content color-white">SỐ THIẾU: {{ so_thieu }}</h2>
+            {% for miss in miss_number %}
+            <p class="color-white">{{ miss.content | safe }}</p>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+</body>
+</html>

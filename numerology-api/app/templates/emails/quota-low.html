@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block subject %}Quota của bạn sắp hết{% endblock %}
+{% block content %}
+  <h1>Quota gói còn ít</h1>
+  <p>Bạn còn <strong>{{ quota_remaining }}</strong> lượt tải báo cáo.</p>
+  <p>Nâng cấp / mua thêm để không bị gián đoạn:</p>
+  <p><a class="btn" href="{{ frontend_url or 'https://nhansinhquan.vn' }}/shop">Xem các gói</a></p>
+{% endblock %}

@@ -1,0 +1,32 @@
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    env_file: .env
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - .:/app
+    restart: unless-stopped
+
+  db:
+    # pgvector/pgvector:pg16 is the official PG16 image with the pgvector extension
+    # preinstalled (required by alembic migration 0010 — chatbot RAG KB tables).
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-numerology}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-numerology}
+      POSTGRES_DB: ${POSTGRES_DB:-numerology}
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-numerology}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+volumes:
+  pg_data:

@@ -1,0 +1,10 @@
+QUOTA GÓI CÒN ÍT — Nhân Sinh Quan
+
+Bạn còn {{ quota_remaining }} lượt tải báo cáo.
+
+Nâng cấp hoặc mua thêm để không bị gián đoạn:
+{{ frontend_url or 'https://nhansinhquan.vn' }}/shop
+
+---
+© Nhân Sinh Quan · https://nhansinhquan.vn
+Huỷ đăng ký nhận email: {{ frontend_url or 'https://nhansinhquan.vn' }}/my-account/settings

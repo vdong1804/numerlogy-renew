@@ -1,0 +1,12 @@
+# Actual production secrets — NEVER commit
+.env.prod
+
+# Certbot webroot (populated at runtime)
+certbot-webroot/
+
+# Nginx and app logs
+*.log
+
+# Temporary files
+*.tmp
+*.swp

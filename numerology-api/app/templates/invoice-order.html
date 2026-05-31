@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>Hóa đơn {{ order.ref_code }}</title>
+  <style>
+    @page { size: A4; margin: 15mm 18mm; }
+    body { font-family: "DejaVu Sans", Arial, sans-serif; color: #1c1f29; font-size: 12pt; }
+    h1 { font-size: 22pt; margin: 0 0 4pt 0; color: #002060; }
+    h2 { font-size: 13pt; margin: 18pt 0 6pt 0; color: #002060; }
+    .row { display: flex; justify-content: space-between; }
+    .muted { color: #666; font-size: 10pt; }
+    table { width: 100%; border-collapse: collapse; margin-top: 8pt; }
+    th, td { border-bottom: 1px solid #d8d8d8; padding: 7pt 6pt; text-align: left; }
+    th { background: #f4f6fb; font-weight: 600; color: #002060; }
+    td.right, th.right { text-align: right; }
+    td.center, th.center { text-align: center; }
+    .total-row td { border-top: 2px solid #002060; border-bottom: none; font-weight: 700; font-size: 13pt; padding-top: 10pt; }
+    .footer { margin-top: 30pt; font-size: 9.5pt; color: #666; text-align: center; }
+    .badge { display: inline-block; padding: 2pt 8pt; border-radius: 999px; background: #e6f4ea; color: #1e7e34; font-size: 10pt; }
+  </style>
+</head>
+<body>
+  <div class="row">
+    <div>
+      <h1>{{ company.name }}</h1>
+      <div class="muted">{{ company.site }}</div>
+    </div>
+    <div style="text-align: right;">
+      <h1>HÓA ĐƠN</h1>
+      <div class="muted">Mã đơn: <strong>{{ order.ref_code }}</strong></div>
+      {% if order.paid_at %}<div class="muted">Thanh toán: {{ order.paid_at[:19] | replace('T', ' ') }}</div>{% endif %}
+      <div style="margin-top: 4pt;"><span class="badge">{{ order.status | upper }}</span></div>
+    </div>
+  </div>
+
+  <h2>Khách hàng</h2>
+  <div>{{ customer.name }}</div>
+  <div class="muted">{{ customer.email }}</div>
+
+  <h2>Sản phẩm</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Mô tả</th>
+        <th class="center">SL</th>
+        <th class="right">Đơn giá</th>
+        <th class="right">Thành tiền</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for it in items %}
+      <tr>
+        <td>{{ it.snapshot_name }}</td>
+        <td class="center">{{ it.qty }}</td>
+        <td class="right">{{ '{:,.0f}'.format(it.unit_price) }} {{ order.currency }}</td>
+        <td class="right">{{ '{:,.0f}'.format(it.subtotal) }} {{ order.currency }}</td>
+      </tr>
+      {% endfor %}
+      <tr class="total-row">
+        <td colspan="3" class="right">Tổng cộng</td>
+        <td class="right">{{ '{:,.0f}'.format(order.total_amount) }} {{ order.currency }}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="footer">
+    Cảm ơn quý khách đã sử dụng dịch vụ của {{ company.name }}.<br/>
+    Mọi thắc mắc xin liên hệ qua trang {{ company.site }}.
+  </div>
+</body>
+</html>
