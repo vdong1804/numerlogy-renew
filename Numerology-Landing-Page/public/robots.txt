@@ -1,0 +1,17 @@
+User-agent: *
+Allow: /
+
+# Block private/admin areas from indexing
+Disallow: /admin
+Disallow: /admin/
+Disallow: /my-account
+Disallow: /my-account/
+Disallow: /api/
+Disallow: /check-out/
+Disallow: /ket-qua
+Disallow: /login
+Disallow: /register
+Disallow: /forgot-password
+Disallow: /reset-password
+
+Sitemap: https://nhansinhquan.vn/sitemap.xml
