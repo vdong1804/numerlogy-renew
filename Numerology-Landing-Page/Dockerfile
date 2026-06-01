@@ -1,4 +1,4 @@
-FROM node:18-alpine AS base
+FROM node:20-alpine AS base
 
 # Install dependencies only when needed
 FROM base AS deps
@@ -6,10 +6,16 @@ FROM base AS deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
-# Install dependencies based on the preferred package manager
+# Skip the Cypress binary download — it's a devDependency only used for e2e
+# tests, not the production build, and the large download is failure-prone.
+ENV CYPRESS_INSTALL_BINARY=0
+
+# Install dependencies based on the preferred package manager.
+# --network-timeout 600000 (10 min) survives slow/unstable connections that
+# otherwise abort with ESOCKETTIMEDOUT mid-download.
 COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* ./
 RUN \
-  if [ -f yarn.lock ]; then yarn; \
+  if [ -f yarn.lock ]; then yarn install --frozen-lockfile --network-timeout 600000; \
   elif [ -f package-lock.json ]; then npm ci; \
   elif [ -f pnpm-lock.yaml ]; then yarn global add pnpm && pnpm i --frozen-lockfile; \
   else echo "Lockfile not found." && exit 1; \
@@ -53,7 +59,7 @@ RUN yarn build
 FROM base AS runner
 WORKDIR /app
 
-ENV NODE_ENV production
+ENV NODE_ENV=production
 # Uncomment the following line in case you want to disable telemetry during runtime.
 # ENV NEXT_TELEMETRY_DISABLED 1
 
@@ -71,6 +77,6 @@ USER nextjs
 
 EXPOSE 3003
 
-ENV PORT 3003
+ENV PORT=3003
 
 CMD ["node", "server.js"]
