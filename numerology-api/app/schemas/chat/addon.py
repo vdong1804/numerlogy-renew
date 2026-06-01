@@ -24,17 +24,29 @@ class AddonPackageOut(BaseModel):
 
 
 class AddonPurchaseInitiateOut(BaseModel):
-    """Response after POSTing to /{package_id}/purchase (pending payment created)."""
+    """Response after POSTing to /{package_id}/purchase (pending payment created).
+
+    Bank info is NOT included — clients fetch it separately from
+    GET /api/payments/bank so receiver details live in a single source of truth
+    (settings.bank_* env vars)."""
 
     payment_id: int
     package_id: int
     price: float
     status: int  # 1 = pending
-    # Bank / QR info pulled from settings for the client to display
-    bank_account_number: str
-    bank_account_holder: str
-    bank_code: str
-    bank_name: str
+
+
+class AddonPaymentOut(BaseModel):
+    """Snapshot of a chat add-on UserPayment, used to re-hydrate the dedicated
+    payment page on refresh / direct visit.
+
+    Same as AddonPurchaseInitiateOut, bank info lives in /api/payments/bank."""
+
+    payment_id: int
+    package_id: int
+    package_name: Optional[str] = None
+    price: float
+    status: int  # 1=pending, 2=approved, 3=rejected
 
 
 class QuotaOut(BaseModel):

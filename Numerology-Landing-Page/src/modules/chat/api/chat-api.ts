@@ -83,10 +83,6 @@ interface AddonPurchaseInitiateRaw {
   package_id: number
   price: number
   status: number
-  bank_account_number: string
-  bank_account_holder: string
-  bank_code: string
-  bank_name: string
 }
 
 function toAddonPurchaseInitiate(
@@ -97,10 +93,6 @@ function toAddonPurchaseInitiate(
     packageId: r.package_id,
     price: r.price,
     status: r.status,
-    bankAccountNumber: r.bank_account_number,
-    bankAccountHolder: r.bank_account_holder,
-    bankCode: r.bank_code,
-    bankName: r.bank_name,
   }
 }
 
@@ -124,6 +116,46 @@ export async function purchaseAddon(
   if (!res.ok) throw new Error(`Mua gói thất bại: ${res.statusText}`)
   const env: { data: AddonPurchaseInitiateRaw } = await res.json()
   return toAddonPurchaseInitiate(env.data)
+}
+
+// ---------------------------------------------------------------------------
+// Addon payment snapshot (for the dedicated /chat/payment/[id] page)
+// ---------------------------------------------------------------------------
+
+interface AddonPaymentRaw {
+  payment_id: number
+  package_id: number
+  package_name: string | null
+  price: number
+  status: number
+}
+
+export interface AddonPayment {
+  paymentId: number
+  packageId: number
+  packageName: string | null
+  price: number
+  /** 1=pending, 2=approved, 3=rejected */
+  status: number
+}
+
+function toAddonPayment(r: AddonPaymentRaw): AddonPayment {
+  return {
+    paymentId: r.payment_id,
+    packageId: r.package_id,
+    packageName: r.package_name,
+    price: r.price,
+    status: r.status,
+  }
+}
+
+export async function getAddonPayment(
+  paymentId: number
+): Promise<AddonPayment> {
+  const raw = await getData<AddonPaymentRaw>(
+    `/api/chat/addons/payments/${paymentId}`
+  )
+  return toAddonPayment(raw)
 }
 
 // ---------------------------------------------------------------------------

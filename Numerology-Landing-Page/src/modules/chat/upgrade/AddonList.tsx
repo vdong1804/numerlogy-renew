@@ -3,7 +3,7 @@
  * onPurchase: caller handles the actual purchase flow (navigate / inline display).
  */
 
-import { Loader2 } from 'lucide-react'
+import { PackageOpen, RefreshCcw } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 
 import type { AddonPackage } from '@/models/Chat'
@@ -44,26 +44,64 @@ export default function AddonList({
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12 text-muted-foreground">
-        <Loader2 className="w-5 h-5 animate-spin mr-2" aria-hidden="true" />
-        <span className="text-sm">Đang tải gói tin nhắn...</span>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {[1, 2, 3].map((n) => (
+          <div
+            key={n}
+            className="h-48 rounded-xl border border-border bg-card/40 animate-pulse"
+          />
+        ))}
       </div>
     )
   }
 
   if (error) {
     return (
-      <p role="alert" className="text-sm text-destructive text-center py-8">
-        {error}
-      </p>
+      <div
+        role="alert"
+        className="rounded-xl border border-destructive/30 bg-destructive/5 px-5 py-6 text-center"
+      >
+        <p className="text-sm text-destructive font-medium mb-3">{error}</p>
+        <button
+          type="button"
+          onClick={() => {
+            setLoading(true)
+            setError(null)
+            load()
+          }}
+          className="inline-flex items-center gap-1.5 rounded-full bg-destructive/10 hover:bg-destructive/20 px-3 py-1.5 text-xs text-destructive font-medium transition-colors"
+        >
+          <RefreshCcw className="w-3 h-3" aria-hidden="true" />
+          Thử lại
+        </button>
+      </div>
     )
   }
 
   if (packages.length === 0) {
     return (
-      <p className="text-sm text-muted-foreground text-center py-8">
-        Chưa có gói tin nhắn nào.
-      </p>
+      <div className="rounded-xl border border-dashed border-border bg-card/40 px-6 py-10 text-center">
+        <span
+          aria-hidden="true"
+          className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-muted text-muted-foreground mb-3"
+        >
+          <PackageOpen className="w-6 h-6" />
+        </span>
+        <p className="text-sm font-medium text-foreground mb-1">
+          Hiện chưa có gói tin nhắn nào
+        </p>
+        <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+          Các gói nâng cấp đang được chuẩn bị. Vui lòng quay lại sau hoặc liên
+          hệ hotline{' '}
+          <a
+            href="tel:0339387373"
+            className="text-primary hover:underline font-medium"
+          >
+            0339 387 373
+          </a>{' '}
+          để được tư vấn.
+        </p>
+      </div>
     )
   }
 

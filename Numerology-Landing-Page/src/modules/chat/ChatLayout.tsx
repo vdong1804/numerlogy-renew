@@ -1,14 +1,15 @@
 /**
- * ChatLayout — responsive 3-column shell: sidebar 260px | thread 1fr | citation drawer 320px.
+ * ChatLayout — responsive 3-column shell: sidebar 280px | thread 1fr | citation drawer 360px.
  * Sidebar collapses to Sheet on mobile (<768px).
  * Wires all hooks and passes state down to parts.
  */
 
-import { Menu } from 'lucide-react'
+import { Menu, Sparkles } from 'lucide-react'
 import { useCallback, useRef, useState } from 'react'
 import { toast } from 'sonner'
 
 import { Sheet, SheetContent } from '@/components/ui/sheet'
+import { useUserAuth } from '@/lib/user-auth'
 import type { Citation, Message } from '@/models/Chat'
 
 import { useChatStream } from './hooks/use-chat-stream'
@@ -17,6 +18,7 @@ import { useMessages } from './hooks/use-messages'
 import { usePdfUpload } from './hooks/use-pdf-upload'
 import { useQuota } from './hooks/use-quota'
 import { useRateLimitCountdown } from './hooks/use-rate-limit-countdown'
+import ChatStartHero, { PROMPT_SUGGESTIONS } from './parts/ChatStartHero'
 import CitationDrawer from './parts/CitationDrawer'
 import ConversationSidebar from './parts/ConversationSidebar'
 import MessageInput from './parts/MessageInput'
@@ -25,6 +27,7 @@ import QuotaBadge from './parts/QuotaBadge'
 import UpsellModal from './parts/UpsellModal'
 
 export default function ChatLayout() {
+  const { user } = useUserAuth()
   const [activeConvId, setActiveConvId] = useState<number | null>(null)
   const [inputText, setInputText] = useState('')
   const [activeCitation, setActiveCitation] = useState<Citation | null>(null)
@@ -99,8 +102,6 @@ export default function ChatLayout() {
     const text = inputText.trim()
     if (!text || !activeConvId) return
 
-    // Optimistically append user message with a negative sentinel id.
-    // Negative ids are local-only; replaced when the persisted message arrives.
     optimisticIdRef.current -= 1
     const userMsg: Message = {
       id: optimisticIdRef.current,
@@ -113,9 +114,7 @@ export default function ChatLayout() {
     setInputText('')
 
     await send(text, attachment?.pdfContextId)
-    // Clear any active rate-limit countdown on successful send
     rateLimit.clear()
-    // Refresh quota after each send so badge stays current
     refreshQuota().catch(() => undefined)
   }, [inputText, activeConvId, append, send, attachment, refreshQuota])
 
@@ -132,7 +131,6 @@ export default function ChatLayout() {
 
   const handleCitationClick = useCallback(
     (index: number) => {
-      // Find citation from streaming or from last completed message
       const allCitations = [
         ...streamingCitations,
         ...messages.flatMap((m) => m.citations),
@@ -144,71 +142,94 @@ export default function ChatLayout() {
     [streamingCitations, messages]
   )
 
+  // Pre-fill a suggested prompt into the input box (welcome screen quick start).
+  const handlePickSuggestion = useCallback(
+    async (text: string) => {
+      let convId = activeConvId
+      if (convId == null) {
+        const conv = await create()
+        convId = conv.id
+        setActiveConvId(convId)
+      }
+      setInputText(text)
+    },
+    [activeConvId, create]
+  )
+
   const sidebar = (
     <ConversationSidebar
       conversations={conversations}
       activeId={activeConvId}
       loading={convsLoading}
+      user={user}
       onSelect={handleSelect}
       onCreate={handleCreate}
       onDelete={remove}
     />
   )
 
+  // Subtle radial glow on main thread for visual depth
+  const threadBgStyle = {
+    backgroundImage:
+      'radial-gradient(circle at 12% -5%, hsla(243, 75%, 65%, 0.10) 0%, transparent 45%),' +
+      'radial-gradient(circle at 95% 100%, hsla(18, 95%, 58%, 0.06) 0%, transparent 40%)',
+  }
+
   return (
-    <div className="flex h-[calc(100dvh-64px)] overflow-hidden">
+    <div className="flex h-full w-full overflow-hidden bg-background text-foreground">
       {/* Desktop sidebar */}
-      <div className="hidden md:flex w-[260px] shrink-0 flex-col">
+      <div className="hidden md:flex w-[280px] shrink-0 flex-col border-r border-border bg-card/30">
         {sidebar}
       </div>
 
       {/* Mobile sidebar via Sheet */}
       <Sheet open={mobileSidebarOpen} onOpenChange={setMobileSidebarOpen}>
-        <SheetContent side="left" className="w-[260px] p-0">
+        <SheetContent side="left" className="w-[300px] p-0">
           {sidebar}
         </SheetContent>
       </Sheet>
 
       {/* Main thread */}
-      <div className="flex flex-col flex-1 min-w-0 bg-background">
-        {/* Mobile topbar */}
-        <div className="md:hidden flex items-center gap-2 px-3 py-2 border-b border-border bg-card">
+      <div
+        className="flex flex-col flex-1 min-w-0 relative"
+        style={threadBgStyle}
+      >
+        {/* Topbar — slim brand bar; conversation title lives in sidebar to avoid duplication */}
+        <div className="flex items-center gap-3 px-4 h-12 border-b border-border/60 bg-card/30 backdrop-blur-sm shrink-0">
           <button
             type="button"
             aria-label="Mở danh sách cuộc trò chuyện"
             onClick={() => setMobileSidebarOpen(true)}
-            className="p-1.5 rounded-md text-muted-foreground hover:bg-muted transition-colors"
+            className="md:hidden p-1.5 rounded-md text-muted-foreground hover:bg-muted transition-colors"
           >
             <Menu className="w-5 h-5" />
           </button>
-          <span className="text-sm font-medium truncate flex-1">
-            {conversations.find((c) => c.id === activeConvId)?.title ??
-              'Chat AI'}
-          </span>
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+            <span className="inline-flex items-center justify-center w-6 h-6 rounded-md bg-primary/15 text-primary shrink-0">
+              <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />
+            </span>
+            <span className="text-sm font-semibold truncate">
+              Trợ lý AI Numerology
+            </span>
+          </div>
           {quota && (
             <QuotaBadge quota={quota} onExhausted={() => setUpsellOpen(true)} />
           )}
         </div>
 
-        {/* Desktop quota badge row — only when a conversation is active */}
-        {activeConvId && quota && (
-          <div className="hidden md:flex items-center justify-end px-4 pt-2 pb-0">
-            <QuotaBadge quota={quota} onExhausted={() => setUpsellOpen(true)} />
-          </div>
-        )}
-
-        {/* No conversation selected */}
+        {/* No conversation selected — welcome screen */}
         {!activeConvId ? (
-          <div className="flex-1 flex items-center justify-center p-8 text-center">
-            <div>
-              <p className="text-3xl mb-3">✨</p>
-              <p className="font-semibold text-lg mb-1">
-                Chào mừng đến Trợ lý AI
-              </p>
-              <p className="text-sm text-muted-foreground max-w-xs">
-                Chọn một cuộc trò chuyện hoặc tạo mới để bắt đầu.
-              </p>
-            </div>
+          <div className="flex-1 overflow-y-auto">
+            <ChatStartHero
+              heading="Chào mừng đến Trợ lý AI"
+              subheading="Hỏi đáp về thần số học, biểu đồ ngày sinh, ý nghĩa các con số và nhiều hơn nữa. Chọn một gợi ý để bắt đầu nhanh."
+              suggestions={PROMPT_SUGGESTIONS}
+              primaryAction={{
+                label: 'Tạo cuộc trò chuyện mới',
+                onClick: handleCreate,
+              }}
+              onPickSuggestion={handlePickSuggestion}
+            />
           </div>
         ) : (
           <>
@@ -227,6 +248,7 @@ export default function ChatLayout() {
               streamingText={streamingText}
               isStreaming={isStreaming}
               onCitationClick={handleCitationClick}
+              onPickSuggestion={(t) => setInputText(t)}
             />
 
             <MessageInput

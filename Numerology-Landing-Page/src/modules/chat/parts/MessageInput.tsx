@@ -1,7 +1,7 @@
 /**
  * MessageInput — auto-expanding textarea (max 8 rows), Enter to send,
- * Shift+Enter for newline, send button + PDF attach. Disabled while streaming.
- * Sticky bottom on mobile via CSS class in chat.module.css.
+ * Shift+Enter for newline. PDF attach + send button live inside the input
+ * container for a unified, modern chat composer.
  */
 
 import { Send, Square } from 'lucide-react'
@@ -84,87 +84,98 @@ export default function MessageInput({
     !rateLimitActive
 
   return (
-    <div className="border-t border-border bg-background px-3 py-3 sticky bottom-0 pb-[env(safe-area-inset-bottom,12px)]">
-      {/* PDF attachment row */}
-      <div className="flex items-center gap-2 mb-2">
-        <PdfUploadButton
-          filename={pdfFilename}
-          uploading={pdfUploading}
-          error={pdfError}
-          onFileSelect={onPdfSelect}
-          onRemove={onPdfRemove}
-          disabled={disabled || isStreaming}
-        />
-      </div>
-
-      {/* Quota exhausted hint */}
-      {!quotaCanSend && !isStreaming && (
-        <p
-          className="mb-1.5 text-xs text-destructive/80 text-center"
-          role="status"
-        >
-          Đã hết lượt miễn phí — mua thêm gói để tiếp tục
-        </p>
-      )}
-
-      {/* Rate-limit countdown hint */}
-      {rateLimitActive && !isStreaming && (
-        <p className="mb-1.5 text-xs text-warning/80 text-center" role="status">
-          Chờ {rateLimitSecondsLeft}s trước khi gửi tin nhắn mới
-        </p>
-      )}
-
-      {/* Input row */}
-      <div className="flex items-end gap-2">
-        <textarea
-          ref={textareaRef}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          onKeyDown={handleKeyDown}
-          disabled={disabled || isStreaming}
-          placeholder="Nhập câu hỏi... (Enter để gửi, Shift+Enter xuống dòng)"
-          aria-label="Nhập tin nhắn"
-          rows={1}
-          className={cn(
-            'flex-1 resize-none rounded-xl border border-input bg-background px-3 py-2 text-sm shadow-sm',
-            'placeholder:text-muted-foreground transition-colors leading-6',
-            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
-            'disabled:cursor-not-allowed disabled:opacity-50'
-          )}
-        />
-
-        {isStreaming ? (
-          <button
-            type="button"
-            onClick={onCancel}
-            aria-label="Dừng phản hồi"
-            className="shrink-0 flex items-center justify-center w-9 h-9 rounded-xl bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors border border-destructive/20"
+    <div className="border-t border-border bg-background px-3 py-3 sticky bottom-0 pb-[max(env(safe-area-inset-bottom,12px),12px)]">
+      <div className="max-w-3xl mx-auto">
+        {/* Quota exhausted hint */}
+        {!quotaCanSend && !isStreaming && (
+          <p
+            className="mb-1.5 text-xs text-destructive/80 text-center"
+            role="status"
           >
-            <Square className="w-4 h-4" />
-          </button>
-        ) : (
-          <button
-            type="button"
-            onClick={onSend}
-            disabled={!canSend}
-            aria-label="Gửi tin nhắn"
-            className={cn(
-              'shrink-0 flex items-center justify-center w-9 h-9 rounded-xl transition-colors',
-              canSend
-                ? 'bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm'
-                : 'bg-muted text-muted-foreground cursor-not-allowed'
-            )}
-          >
-            <Send className="w-4 h-4" />
-          </button>
+            Đã hết lượt miễn phí — mua thêm gói để tiếp tục
+          </p>
         )}
-      </div>
 
-      {isStreaming && (
-        <p className="mt-1.5 text-xs text-muted-foreground text-center animate-pulse">
-          Đang trả lời...
+        {/* Rate-limit countdown hint */}
+        {rateLimitActive && !isStreaming && (
+          <p
+            className="mb-1.5 text-xs text-warning/80 text-center"
+            role="status"
+          >
+            Chờ {rateLimitSecondsLeft}s trước khi gửi tin nhắn mới
+          </p>
+        )}
+
+        {/* Unified input container */}
+        <div
+          className={cn(
+            'flex flex-col rounded-2xl border border-input bg-card shadow-sm transition-all',
+            'focus-within:border-primary/60 focus-within:ring-2 focus-within:ring-primary/20'
+          )}
+        >
+          <textarea
+            ref={textareaRef}
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            onKeyDown={handleKeyDown}
+            disabled={disabled || isStreaming}
+            placeholder="Nhập câu hỏi... (Enter để gửi, Shift+Enter xuống dòng)"
+            aria-label="Nhập tin nhắn"
+            rows={1}
+            className={cn(
+              'w-full resize-none bg-transparent px-4 pt-3 pb-1 text-sm leading-6 text-foreground caret-primary',
+              'placeholder:text-muted-foreground focus-visible:outline-none',
+              'disabled:cursor-not-allowed disabled:opacity-50'
+            )}
+          />
+
+          <div className="flex items-center gap-2 px-2 pb-2">
+            <PdfUploadButton
+              filename={pdfFilename}
+              uploading={pdfUploading}
+              error={pdfError}
+              onFileSelect={onPdfSelect}
+              onRemove={onPdfRemove}
+              disabled={disabled || isStreaming}
+            />
+
+            <div className="flex-1" />
+
+            {isStreaming ? (
+              <button
+                type="button"
+                onClick={onCancel}
+                aria-label="Dừng phản hồi"
+                className="shrink-0 inline-flex items-center justify-center w-9 h-9 rounded-full bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors border border-destructive/20"
+              >
+                <Square className="w-4 h-4" fill="currentColor" />
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={onSend}
+                disabled={!canSend}
+                aria-label="Gửi tin nhắn"
+                className={cn(
+                  'shrink-0 inline-flex items-center justify-center w-9 h-9 rounded-full transition-all',
+                  canSend
+                    ? 'bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm hover:shadow'
+                    : 'bg-muted text-muted-foreground cursor-not-allowed'
+                )}
+              >
+                <Send className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Footnote */}
+        <p className="mt-1.5 text-[11px] text-muted-foreground/70 text-center">
+          {isStreaming
+            ? 'Đang trả lời...'
+            : 'AI có thể mắc lỗi — vui lòng kiểm chứng thông tin quan trọng.'}
         </p>
-      )}
+      </div>
     </div>
   )
 }

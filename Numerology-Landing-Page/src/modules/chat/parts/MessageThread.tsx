@@ -5,12 +5,14 @@
  * TODO: add react-window virtualization if conversation exceeds 100 messages.
  */
 
+import { Bot, ChevronDown, User } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
 import type { Message } from '@/models/Chat'
 
+import ChatStartHero, { PROMPT_SUGGESTIONS } from './ChatStartHero'
 import MessageMarkdown from './MessageMarkdown'
 
 /** Threshold in pixels — within this distance from bottom = "near bottom" */
@@ -22,6 +24,8 @@ interface MessageThreadProps {
   streamingText: string
   isStreaming: boolean
   onCitationClick: (index: number) => void
+  /** Optional — let parent prefill input from suggested prompts */
+  onPickSuggestion?: (text: string) => void
 }
 
 // ---------------------------------------------------------------------------
@@ -32,9 +36,9 @@ function AssistantAvatar() {
   return (
     <div
       aria-hidden="true"
-      className="shrink-0 w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-xs font-bold text-primary"
+      className="shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-primary-foreground shadow-sm"
     >
-      AI
+      <Bot className="w-4 h-4" />
     </div>
   )
 }
@@ -43,9 +47,9 @@ function UserAvatar() {
   return (
     <div
       aria-hidden="true"
-      className="shrink-0 w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-bold text-muted-foreground"
+      className="shrink-0 w-8 h-8 rounded-full bg-muted border border-border flex items-center justify-center text-muted-foreground"
     >
-      Tôi
+      <User className="w-4 h-4" />
     </div>
   )
 }
@@ -60,14 +64,14 @@ function MessageBubble({
   const isUser = message.role === 'user'
 
   return (
-    <div className={cn('flex gap-3', isUser && 'flex-row-reverse')}>
+    <div className={cn('flex gap-3 group', isUser && 'flex-row-reverse')}>
       {isUser ? <UserAvatar /> : <AssistantAvatar />}
       <div
         className={cn(
-          'max-w-[80%] rounded-2xl px-4 py-3 text-sm',
+          'max-w-[78%] rounded-2xl px-4 py-2.5 text-sm shadow-sm',
           isUser
-            ? 'bg-primary text-primary-foreground rounded-tr-sm'
-            : 'bg-muted text-foreground rounded-tl-sm'
+            ? 'bg-primary text-primary-foreground rounded-tr-md'
+            : 'bg-card border border-border text-foreground rounded-tl-md'
         )}
       >
         {isUser ? (
@@ -83,7 +87,7 @@ function MessageBubble({
 
         {/* Citation badges for completed messages */}
         {message.citations.length > 0 && (
-          <div className="flex flex-wrap gap-1 mt-2 pt-2 border-t border-border/30">
+          <div className="flex flex-wrap gap-1.5 mt-2.5 pt-2.5 border-t border-border/50">
             {message.citations.map((c) => (
               <button
                 key={c.index}
@@ -92,10 +96,10 @@ function MessageBubble({
                   c.title ?? c.sourceType
                 }`}
                 onClick={() => onCitationClick(c.index)}
-                className="inline-flex items-center gap-1 rounded-full bg-background/30 border border-border/50 px-2 py-0.5 text-xs hover:bg-background/50 transition-colors"
+                className="inline-flex items-center gap-1 rounded-full bg-muted hover:bg-muted/70 border border-border/60 px-2 py-0.5 text-xs transition-colors"
               >
-                <span className="font-bold">[{c.index}]</span>
-                <span className="truncate max-w-[100px] text-muted-foreground">
+                <span className="font-semibold text-primary">[{c.index}]</span>
+                <span className="truncate max-w-[120px] text-muted-foreground">
                   {c.title ?? c.sourceType}
                 </span>
               </button>
@@ -117,6 +121,7 @@ export default function MessageThread({
   streamingText,
   isStreaming,
   onCitationClick,
+  onPickSuggestion,
 }: MessageThreadProps) {
   const bottomRef = useRef<HTMLDivElement>(null)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
@@ -146,7 +151,7 @@ export default function MessageThread({
 
   if (loading) {
     return (
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto px-4 py-6 space-y-5">
         {[1, 2, 3].map((n) => (
           <div
             key={n}
@@ -154,7 +159,7 @@ export default function MessageThread({
           >
             <Skeleton className="w-8 h-8 rounded-full shrink-0" />
             <Skeleton
-              className={cn('h-16 rounded-xl', n % 2 === 0 ? 'w-48' : 'w-64')}
+              className={cn('h-16 rounded-2xl', n % 2 === 0 ? 'w-48' : 'w-64')}
             />
           </div>
         ))}
@@ -167,62 +172,67 @@ export default function MessageThread({
       <div
         ref={scrollContainerRef}
         onScroll={handleScroll}
-        className="h-full overflow-y-auto p-4 space-y-4"
+        className="h-full overflow-y-auto"
         role="log"
         aria-live="polite"
         aria-label="Lịch sử trò chuyện"
       >
-        {messages.length === 0 && !isStreaming && (
-          <div className="flex flex-col items-center justify-center h-full min-h-[200px] text-center px-4">
-            <p className="text-2xl mb-2">💬</p>
-            <p className="text-sm font-medium text-muted-foreground">
-              Bắt đầu cuộc trò chuyện bằng cách nhập câu hỏi bên dưới.
-            </p>
-          </div>
-        )}
-
-        {/* History messages */}
-        {messages.map((msg) => (
-          <MessageBubble
-            key={msg.id}
-            message={msg}
-            onCitationClick={onCitationClick}
+        {/* Empty conversation — centered hero with suggestion grid.
+            ChatStartHero internally uses min-h-full + flex to fill the
+            scroll viewport and center its content both axes. */}
+        {messages.length === 0 && !isStreaming && onPickSuggestion && (
+          <ChatStartHero
+            heading="Bắt đầu cuộc trò chuyện"
+            subheading="Nhập câu hỏi vào ô bên dưới hoặc chọn một gợi ý để khởi đầu."
+            suggestions={PROMPT_SUGGESTIONS}
+            onPickSuggestion={onPickSuggestion}
           />
-        ))}
-
-        {/* Streaming assistant bubble */}
-        {isStreaming && streamingText && (
-          <div className="flex gap-3">
-            <AssistantAvatar />
-            <div className="max-w-[80%] rounded-2xl rounded-tl-sm bg-muted px-4 py-3 text-sm">
-              <MessageMarkdown
-                content={streamingText}
-                onCitationClick={onCitationClick}
-              />
-              <span className="inline-block w-1.5 h-4 bg-primary/70 animate-pulse ml-0.5 align-middle" />
-            </div>
-          </div>
         )}
 
-        {/* Waiting for first token */}
-        {isStreaming && !streamingText && (
-          <div className="flex gap-3">
-            <AssistantAvatar />
-            <div className="rounded-2xl rounded-tl-sm bg-muted px-4 py-3">
-              <div className="flex gap-1 items-center h-5">
-                {[0, 1, 2].map((i) => (
-                  <span
-                    key={i}
-                    className="w-1.5 h-1.5 rounded-full bg-muted-foreground/50 animate-bounce"
-                    style={{ animationDelay: `${i * 150}ms` }}
-                  />
-                ))}
+        <div className="max-w-3xl mx-auto px-4 py-6 space-y-5">
+          {/* History messages */}
+          {messages.map((msg) => (
+            <MessageBubble
+              key={msg.id}
+              message={msg}
+              onCitationClick={onCitationClick}
+            />
+          ))}
+
+          {/* Streaming assistant bubble */}
+          {isStreaming && streamingText && (
+            <div className="flex gap-3">
+              <AssistantAvatar />
+              <div className="max-w-[78%] rounded-2xl rounded-tl-md bg-card border border-border px-4 py-2.5 text-sm shadow-sm">
+                <MessageMarkdown
+                  content={streamingText}
+                  onCitationClick={onCitationClick}
+                />
+                <span className="inline-block w-1.5 h-4 bg-primary/70 animate-pulse ml-0.5 align-middle" />
               </div>
             </div>
-          </div>
-        )}
+          )}
 
-        <div ref={bottomRef} />
+          {/* Waiting for first token */}
+          {isStreaming && !streamingText && (
+            <div className="flex gap-3">
+              <AssistantAvatar />
+              <div className="rounded-2xl rounded-tl-md bg-card border border-border px-4 py-3 shadow-sm">
+                <div className="flex gap-1 items-center h-5">
+                  {[0, 1, 2].map((i) => (
+                    <span
+                      key={i}
+                      className="w-1.5 h-1.5 rounded-full bg-muted-foreground/50 animate-bounce"
+                      style={{ animationDelay: `${i * 150}ms` }}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div ref={bottomRef} />
+        </div>
       </div>
 
       {/* "New messages" pill — shown when user scrolled away mid-stream */}
@@ -230,10 +240,11 @@ export default function MessageThread({
         <button
           type="button"
           onClick={scrollToBottom}
-          className="absolute bottom-4 right-4 flex items-center gap-1.5 rounded-full bg-primary text-primary-foreground px-3 py-1.5 text-xs font-medium shadow-md hover:bg-primary/90 transition-colors"
+          className="absolute bottom-4 left-1/2 -translate-x-1/2 inline-flex items-center gap-1.5 rounded-full bg-primary text-primary-foreground px-3 py-1.5 text-xs font-medium shadow-lg hover:bg-primary/90 transition-colors"
           aria-label="Cuộn xuống tin nhắn mới"
         >
-          ↓ Có tin nhắn mới
+          <ChevronDown className="w-3.5 h-3.5" />
+          Tin nhắn mới
         </button>
       )}
     </div>

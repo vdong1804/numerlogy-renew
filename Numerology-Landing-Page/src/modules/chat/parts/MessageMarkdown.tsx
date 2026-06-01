@@ -32,7 +32,7 @@ function transformCitationTokens(
           type="button"
           aria-label={`Xem trích dẫn ${n}`}
           onClick={() => onCitationClick(n)}
-          className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold bg-primary/20 text-primary hover:bg-primary/40 transition-colors cursor-pointer mx-0.5 leading-none"
+          className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-md text-[10px] font-semibold bg-primary/15 text-primary hover:bg-primary/25 transition-colors cursor-pointer mx-0.5 align-middle leading-none"
         >
           {n}
         </button>

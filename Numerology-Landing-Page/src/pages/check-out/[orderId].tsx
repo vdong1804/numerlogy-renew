@@ -4,8 +4,6 @@
  * Shows the QR placeholder, the ref_code copy box, the totals, and live
  * polls /api/orders/:id/status until the order resolves (paid/expired/...).
  */
-import Link from 'next/link'
-import { useRouter } from 'next/router'
 import {
   ArrowLeft,
   CheckCircle2,
@@ -15,20 +13,34 @@ import {
   ShieldCheck,
   XCircle,
 } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import Link from 'next/link'
+import { useRouter } from 'next/router'
 import type { ReactElement } from 'react'
+import { useEffect, useState } from 'react'
 
 import useOrderStatusPoller from '@/components/checkout/order-status-poller'
-import QrDisplay from '@/components/checkout/qr-display'
-import RefCodeCopy from '@/components/checkout/ref-code-copy'
+import SePayPaymentBlock, {
+  type SePayStatus,
+} from '@/components/checkout/sepay-payment-block'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Main } from '@/layouts/Main'
 import { Meta } from '@/layouts/Meta'
-import { getOrder, type Order } from '@/lib/shop-api'
+import { type Order, getOrder } from '@/lib/shop-api'
 import { formatVnd } from '@/lib/utils'
 import type { NextPageWithLayout } from '@/models'
+
+/** Translate the Order's lifecycle status into the simpler SePayStatus
+ *  vocabulary that SePayPaymentBlock understands. `cancelled` collapses
+ *  into `failed` for display since the user-facing recovery action is
+ *  the same (re-checkout). */
+function mapOrderStatusToSePay(s: Order['status']): SePayStatus {
+  if (s === 'paid') return 'paid'
+  if (s === 'expired') return 'expired'
+  if (s === 'cancelled' || s === 'failed') return 'failed'
+  return 'pending'
+}
 
 const STATUS_INFO: Record<
   Order['status'],
@@ -93,7 +105,7 @@ const CheckoutOrderPage: NextPageWithLayout = () => {
     onResolved: (info) => {
       if (info.status !== 'paid') return
       const hasReport = (order?.items ?? []).some((it) =>
-        it.snapshot_name?.toLowerCase().includes('báo cáo'),
+        it.snapshot_name?.toLowerCase().includes('báo cáo')
       )
       const target = hasReport ? '/my-account/reports' : '/my-account'
       setTimeout(() => router.push(target), 2500)
@@ -103,7 +115,9 @@ const CheckoutOrderPage: NextPageWithLayout = () => {
   useEffect(() => {
     if (!order) return
     if (poller.status !== order.status) {
-      getOrder(order.id).then(setOrder).catch(() => undefined)
+      getOrder(order.id)
+        .then(setOrder)
+        .catch(() => undefined)
     }
   }, [poller.status, order])
 
@@ -114,7 +128,7 @@ const CheckoutOrderPage: NextPageWithLayout = () => {
     const isFreePaid = order.total_amount === 0 || order.status === 'paid'
     if (!isFreePaid) return
     const hasReport = order.items.some((it) =>
-      it.snapshot_name?.toLowerCase().includes('báo cáo'),
+      it.snapshot_name?.toLowerCase().includes('báo cáo')
     )
     router.replace(hasReport ? '/my-account/reports' : '/my-account')
   }, [order, router])
@@ -217,10 +231,24 @@ const CheckoutOrderPage: NextPageWithLayout = () => {
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* LEFT — QR + ref code */}
-          <div className="space-y-4">
-            <QrDisplay amount={order.total_amount} refCode={order.ref_code} />
-            <RefCodeCopy refCode={order.ref_code} />
+          {/* LEFT — unified SePay payment block (bank + ref + status) */}
+          <div>
+            <SePayPaymentBlock
+              amount={order.total_amount}
+              refCode={order.ref_code}
+              status={mapOrderStatusToSePay(currentStatus)}
+              isPolling={!poller.stopped && currentStatus === 'pending'}
+              footnote={
+                <>
+                  Hết hạn lúc{' '}
+                  <span className="font-medium text-foreground">
+                    {new Date(order.expires_at).toLocaleString('vi-VN')}
+                  </span>
+                  . Hệ thống tự cập nhật khi nhận được tiền — bạn cũng có thể
+                  bấm &quot;Làm mới trạng thái&quot; bên phải.
+                </>
+              }
+            />
           </div>
 
           {/* RIGHT — order summary */}
@@ -278,8 +306,8 @@ const CheckoutOrderPage: NextPageWithLayout = () => {
 
               {poller.stopped && currentStatus === 'pending' && (
                 <p className="px-5 pb-3 text-xs text-muted-foreground">
-                  Đã dừng kiểm tra tự động sau 30 phút. Bấm "Làm mới" nếu đã
-                  chuyển khoản.
+                  Đã dừng kiểm tra tự động sau 30 phút. Bấm &quot;Làm mới&quot;
+                  nếu đã chuyển khoản.
                 </p>
               )}
 
@@ -321,7 +349,11 @@ const CheckoutOrderPage: NextPageWithLayout = () => {
 
 CheckoutOrderPage.getLayout = function getLayout(page: ReactElement) {
   return (
-    <Main meta={<Meta title="Thanh toán đơn hàng" description="Hoàn tất thanh toán" />}>
+    <Main
+      meta={
+        <Meta title="Thanh toán đơn hàng" description="Hoàn tất thanh toán" />
+      }
+    >
       {page}
     </Main>
   )

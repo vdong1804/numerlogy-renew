@@ -11,11 +11,10 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.config import settings
 from app.db.models.package import Package, UserPayment
 from app.db.models.user import User
 from app.deps import get_current_user, get_db
-from app.schemas.chat.addon import AddonPackageOut, AddonPurchaseInitiateOut
+from app.schemas.chat.addon import AddonPackageOut, AddonPaymentOut, AddonPurchaseInitiateOut
 
 addons_router = APIRouter(prefix="/api/chat/addons", tags=["chat"])
 
@@ -55,6 +54,47 @@ async def list_addon_packages(
 
 
 # ---------------------------------------------------------------------------
+# GET /api/chat/addons/payments/{payment_id}
+# ---------------------------------------------------------------------------
+
+
+@addons_router.get("/payments/{payment_id}", response_model=dict)
+async def get_addon_payment(
+    payment_id: int,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """Re-hydrate a chat add-on payment for the dedicated /chat/payment/[id] page.
+
+    Auth-scoped: returns 404 if the payment does not belong to the caller, to
+    avoid leaking existence of foreign payment IDs. Wrapped in {data: ...}
+    to match the rest of the chat router envelope convention.
+    """
+    result = await db.execute(
+        select(UserPayment, Package)
+        .join(Package, Package.id == UserPayment.package_id)
+        .where(UserPayment.id == payment_id)
+        .where(UserPayment.user_id == user.id)
+        .where(Package.package_kind == "chat_addon")
+    )
+    row = result.first()
+    if row is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Payment not found",
+        )
+    payment, package = row
+    out = AddonPaymentOut(
+        payment_id=payment.id,
+        package_id=package.id,
+        package_name=package.name,
+        price=payment.price,
+        status=payment.status,
+    )
+    return {"data": out.model_dump()}
+
+
+# ---------------------------------------------------------------------------
 # POST /api/chat/addons/{package_id}/purchase
 # ---------------------------------------------------------------------------
 
@@ -72,8 +112,8 @@ async def purchase_addon_package(
     """Initiate a payment for a chat add-on package.
 
     Validates package is active and kind='chat_addon', then creates a pending
-    UserPayment row (status=1). Returns bank / QR info so the client can
-    display payment instructions.
+    UserPayment row (status=1). Bank receiver info is served separately by
+    GET /api/payments/bank (single source of truth from settings env vars).
     """
     # Validate package
     pkg_result = await db.execute(
@@ -104,10 +144,6 @@ async def purchase_addon_package(
         package_id=package.id,
         price=payment.price,
         status=payment.status,
-        bank_account_number=settings.bank_account_number,
-        bank_account_holder=settings.bank_account_holder,
-        bank_code=settings.bank_code,
-        bank_name=settings.bank_name,
     )
     return {"data": out.model_dump()}
 

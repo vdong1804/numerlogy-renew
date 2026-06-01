@@ -59,10 +59,6 @@ export interface AddonPurchaseInitiate {
   packageId: number
   price: number
   status: number
-  bankAccountNumber: string
-  bankAccountHolder: string
-  bankCode: string
-  bankName: string
 }
 
 // ---------------------------------------------------------------------------
