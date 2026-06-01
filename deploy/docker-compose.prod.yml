@@ -61,8 +61,10 @@ services:
         condition: service_healthy
     volumes:
       # Host bind-mounts so the host nginx can serve /media and /static directly.
-      - ./media:/code/media
-      - ./static:/code/static
+      # Target MUST match the app's MEDIA_ROOT/STATIC_ROOT (the image WORKDIR is
+      # /app), otherwise uploads land outside the mount and nginx can't see them.
+      - ./media:/app/media
+      - ./static:/app/static
     restart: unless-stopped
 
   # ---------------------------------------------------------------------------
