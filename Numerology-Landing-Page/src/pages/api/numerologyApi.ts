@@ -1,6 +1,8 @@
 import type {
   MainstreamNumber,
   News,
+  NewsListResponse,
+  NumerologyReport,
   ResultResponse,
 } from '@/models'
 
@@ -26,6 +28,15 @@ const numerologyApi = {
     })
     return response.data
   },
+  // Full data-driven report (single-page summary). Backend: GET /api/numerology-report.
+  async getNumerologyReport(params: MainstreamNumberParams) {
+    const url = '/api/numerology-report'
+    const response = await axiosClient.get<ResultResponse<NumerologyReport>>(
+      url,
+      { params }
+    )
+    return response.data
+  },
   async getMainstreamPDF(params: MainstreamNumberParams) {
     const url = '/api/so-hoc'
     const config = {
@@ -45,10 +56,19 @@ const numerologyApi = {
     const response = await axiosClient.get<ResultResponse<News[]>>(url)
     return response.data
   },
-  async getDetailNews(id: string) {
-    const url = `/api/new/${id}`
-    const response = await axiosClient.get<News>(url)
+  // Paginated blog list (newest first). Backend: GET /api/news.
+  async getNewsList(params: { limit?: number; offset?: number } = {}) {
+    const url = '/api/news'
+    const response = await axiosClient.get<NewsListResponse>(url, {
+      params: { limit: params.limit ?? 12, offset: params.offset ?? 0 },
+    })
     return response.data
+  },
+  // Single article detail. Backend: GET /api/news/{id} → { data }.
+  async getDetailNews(id: string) {
+    const url = `/api/news/${id}`
+    const response = await axiosClient.get<ResultResponse<News>>(url)
+    return response.data.data
   },
 }
 

@@ -12,15 +12,56 @@ from fastapi.responses import HTMLResponse, StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.numerology import calculate_numerology_numbers
+from app.db.models.numerology_content import MainNumber
 from app.deps import get_db
 from app.services.horoscope_client import gen_horoscopes
 from app.services.numerology_context import build_common_context, save_user_download
-from app.services.numerology_db import get_free_extra_models, get_numerology_models
+from app.services.numerology_db import fetch_by_code, get_free_extra_models, get_numerology_models
 from app.utils.pdf import render_html, render_pdf
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+
+@router.get('/so-chu-dao')
+async def so_chu_dao(
+    full_name: str = Query(...),
+    birth_day: str = Query(...),
+    phone: str = Query(default=''),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """Mainstream (life-path) number — public, no auth required.
+
+    Returns the MainNumber content row for the computed `so_chu_dao`.
+    Consumed by the landing-page result screen (GET /api/so-chu-dao).
+    """
+    full_name = full_name.strip()
+    if not full_name:
+        raise HTTPException(400, 'Vui lòng nhập họ tên')
+    if not re.fullmatch(r'\d{8}', birth_day):
+        raise HTTPException(400, 'Ngày sinh không hợp lệ (định dạng: ddmmyyyy)')
+
+    try:
+        calc = calculate_numerology_numbers(birth_day, full_name)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc))
+
+    row = await fetch_by_code(db, MainNumber, calc['so_chu_dao'])
+    if row is None:
+        raise HTTPException(404, 'Không tìm thấy dữ liệu số chủ đạo')
+
+    return {
+        'data': {
+            'so_chu_dao': {
+                'id': row.id,
+                'code': calc['so_chu_dao'],
+                'title': row.title,
+                'content': row.content,
+                'number_page': row.number_page,
+            }
+        }
+    }
 
 
 @router.get('/so-hoc-free')

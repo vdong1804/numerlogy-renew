@@ -64,6 +64,7 @@ export default function BlogNumerologyCard({
                 fontFamily: 'var(--philosopher-font)',
                 lineHeight: '20px',
               }}
+              className="line-clamp-2"
             >
               {newsInfo.title}
             </Typography>
@@ -91,8 +92,9 @@ export default function BlogNumerologyCard({
             </Box>
           </Box>
 
-          <Typography variant="body2" mt={1}>
-            {newsInfo.content}
+          {/* Use the tag-stripped preview from the API (content is raw HTML). */}
+          <Typography variant="body2" mt={1} className="line-clamp-3">
+            {newsInfo.content_preview || newsInfo.short_content || ''}
           </Typography>
         </CardContent>
       </CardActionArea>

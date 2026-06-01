@@ -32,4 +32,15 @@ export interface News {
   created_at: string
   updated_at: string
   category: string | null
+  /** List-view fields from the backend NewsListOut schema. */
+  short_content?: string | null
+  content_preview?: string
+}
+
+/** Paginated list envelope returned by GET /api/news. */
+export interface NewsListResponse {
+  data: News[]
+  total: number
+  limit: number
+  offset: number
 }

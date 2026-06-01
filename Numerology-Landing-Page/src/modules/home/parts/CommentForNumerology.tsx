@@ -11,24 +11,33 @@ const commentExamples = [
     user: {
       id: 1,
       name: 'Mai Linh',
-      job: 'MC - Design',
-      avatar:
-        'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=387&q=80',
+      job: 'Số chủ đạo 2 · Nhân viên truyền thông',
+      avatar: '/assets/images/avatar-circle.png',
     },
     content:
-      'Trước đây tôi thường xuyên có những mối quan hệ không tốt và đem đến những ảnh hưởng tiêu cực. Khi có quá nhiều mối hệ như vậy khiến tôi băn khoăn suy nghĩ có phải vấn đề đến từ chính bản thân mình hay không?”. Suy nghĩ này khiến cho tôi từ một người đầy tự tin trở nên rụt rè, chỉ biết thu mình lại ở những nơi đông người. Nhưng từ khi biết đến Nhân số học, tôi nhận ra vấn đề không phải do cá nhân chưa đủ tốt, lí do là bởi tôi không biết cách chọn lọc. Bằng cách tra cứu Thần số học Pythagoras, tôi hiểu thêm về chính mình và bản thân phù hợp với những người như thế nào.',
+      'Tôi mang số chủ đạo 2 – một người sống thiên về cảm xúc và luôn đặt mối quan hệ lên hàng đầu. Trước đây tôi hay tự trách mình mỗi khi một mối quan hệ đổ vỡ, dần dần trở nên rụt rè và thu mình. Khi tra cứu Thần số học Pythagoras, tôi mới hiểu sự nhạy cảm ấy chính là điểm mạnh của số 2, vấn đề chỉ là tôi chưa biết cách đặt ranh giới và chọn lọc người phù hợp. Giờ tôi tự tin hơn rất nhiều và biết trân trọng giá trị của bản thân.',
   },
   {
     id: 2,
     user: {
       id: 2,
       name: 'Ngọc Bích',
-      job: 'MC - Design',
-      avatar:
-        'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=387&q=80',
+      job: 'Số chủ đạo 5 · Chuyên viên kinh doanh',
+      avatar: '/assets/images/avatar-circle.png',
     },
     content:
-      'Một người từng ở tuổi 30 vẫn phải chuyển hết công việc này đến việc khác, tôi ước mình biết đến Thần số học Pythagoras sớm hơn. Ở giai đoạn lựa chọn nghề nghiệp vì không hiểu được hết ưu nhược điểm, thế mạnh của bản thân nên tôi đã “học đại” một ngành hot lúc bấy giờ. Nhưng kết quả thì sao? Những tháng ngày sau đó của tôi trượt dài trong sự chán chường vì thiếu đi sự đam mê: đi học điểm số luôn ở hạng cuối, lúc đi làm thì 8 tiếng ở văn phòng kéo dài như cả tuần… Nhưng tôi không đủ tự tin để làm lại vì bản thân không biết mình thật sự thích và giỏi ở lĩnh vực nào. ',
+      'Ngoài 30 tuổi mà tôi vẫn nhảy việc liên tục, lúc nào cũng thấy bí bách. Ước gì tôi biết đến Thần số học sớm hơn. Hóa ra tôi mang số chủ đạo 5 – con người của tự do, trải nghiệm và sự đa dạng, nên những công việc lặp đi lặp lại khiến tôi ngột ngạt là điều dễ hiểu. Khi hiểu được thế mạnh thật sự của mình, tôi chuyển hẳn sang lĩnh vực kinh doanh – nơi tôi được di chuyển, gặp gỡ và thử thách mỗi ngày. Lần đầu tiên tôi thấy mình đi đúng đường.',
+  },
+  {
+    id: 3,
+    user: {
+      id: 3,
+      name: 'Quốc Anh',
+      job: 'Số chủ đạo 8 · Quản lý dự án',
+      avatar: '/assets/images/avatar-circle.png',
+    },
+    content:
+      'Là số chủ đạo 8, tôi luôn khao khát thành công và địa vị, nhưng cũng vì thế mà lao vào công việc đến mức kiệt sức và bỏ bê gia đình. Bản luận giải thần số học chỉ ra rằng bài học lớn nhất của số 8 là cân bằng giữa vật chất và tinh thần. Tôi học cách dùng năng lực tổ chức của mình một cách khôn ngoan hơn, biết dừng lại đúng lúc. Sự nghiệp vẫn đi lên, mà tôi lại tìm lại được sự bình yên bên những người mình thương.',
   },
 ]
 export default function CommentForNumerology() {

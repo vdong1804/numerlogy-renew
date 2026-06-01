@@ -1,8 +1,8 @@
-import ChevronRightIcon from '@mui/icons-material/ChevronRight'
-import { Box, Button, Container, Grid, Typography } from '@mui/material'
+import { Box, Container, Grid } from '@mui/material'
 import * as React from 'react'
 
 import { AccordionCustom } from '@/components/accordion'
+import { NumberMeaningExplorer } from '@/modules/numerology-meaning'
 
 import { TittlePage } from './parts'
 
@@ -11,13 +11,13 @@ const NUMEROLOGY_SHARED_LIST = [
     id: 1,
     title: 'Khám phá bản thân theo nhân số học!',
     description:
-      'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse malesuada lacus ex, sit amet blandit leo lobortis eget.',
+      'Nhân số học (Thần số học Pythagoras) giải mã con người bạn thông qua ngày tháng năm sinh và họ tên khai sinh. Từ những con số tưởng chừng ngẫu nhiên ấy, bạn sẽ hiểu rõ tính cách, điểm mạnh, điểm yếu, đam mê tiềm ẩn và con đường phát triển phù hợp nhất với mình – để sống đúng với con người thật và phát huy trọn vẹn tiềm năng vốn có.',
   },
   {
     id: 2,
     title: 'Tracuuthansohoc có thể giúp gì cho bạn?',
     description:
-      'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse malesuada lacus ex, sit amet blandit leo lobortis eget. Lorem ipsum dolor sit amet, consectetur adipiscing elit',
+      'Chỉ với họ tên và ngày sinh, hệ thống tính toán đầy đủ các chỉ số quan trọng: Số chủ đạo, Số sứ mệnh, Số linh hồn, biểu đồ ngày sinh, các chu kỳ và đỉnh cao cuộc đời. Bạn nhận về bản luận giải chi tiết giúp định hướng sự nghiệp, cải thiện các mối quan hệ, chọn thời điểm hành động phù hợp và đưa ra quyết định sáng suốt hơn trong cuộc sống.',
   },
 ]
 const NUMEROLOGY_INTERESTING = [
@@ -25,37 +25,37 @@ const NUMEROLOGY_INTERESTING = [
     id: 1,
     title: 'Con số chủ đạo (Chỉ đường đời)',
     description:
-      'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse malesuada lacus ex, sit amet blandit leo lobortis eget.',
+      'Số chủ đạo (Life Path) được tính từ tổng các chữ số trong ngày tháng năm sinh, là chỉ số quan trọng nhất trong thần số học. Nó cho biết bài học, sứ mệnh và con đường cốt lõi mà bạn được sinh ra để đi qua – từ Số 1 thủ lĩnh độc lập đến Số 9 nhân ái, cùng các Số bậc thầy 11, 22, 33.',
   },
   {
     id: 2,
     title: 'Biểu đồ ngày sinh',
     description:
-      'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse malesuada lacus ex, sit amet blandit leo lobortis eget.',
+      'Biểu đồ ngày sinh sắp xếp các chữ số trong ngày sinh của bạn vào lưới 9 ô (theo trục Pythagoras). Số lượng và vị trí các con số tiết lộ những mũi tên sức mạnh, các đặc điểm nổi trội cũng như những khía cạnh còn khuyết thiếu cần được bồi đắp trong tư duy, cảm xúc và hành động.',
   },
   {
     id: 3,
     title: 'Năm cá nhân',
     description:
-      'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse malesuada lacus ex, sit amet blandit leo lobortis eget.',
+      'Năm cá nhân là chu kỳ năng lượng vận hành theo vòng lặp từ 1 đến 9, được tính từ ngày, tháng sinh kết hợp với năm hiện tại. Biết mình đang ở năm cá nhân nào giúp bạn nắm bắt được nên khởi đầu, xây dựng, bứt phá hay buông bỏ – để hành động thuận theo dòng chảy thay vì đi ngược lại nó.',
   },
   {
     id: 4,
     title: '4 đỉnh cao đời người trong thần số học Pitago',
     description:
-      'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse malesuada lacus ex, sit amet blandit leo lobortis eget.',
+      '4 đỉnh cao (Pinnacles) chia cuộc đời thành bốn giai đoạn lớn, mỗi giai đoạn mang một con số và một loại năng lượng riêng. Chúng cho biết cơ hội, thử thách và bài học trọng tâm của từng chặng đường, giúp bạn chuẩn bị tâm thế và tận dụng đúng thời điểm để vươn tới thành công.',
   },
   {
     id: 5,
     title: 'Các chỉ số trong thần số học và ý nghĩa của chúng',
     description:
-      'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse malesuada lacus ex, sit amet blandit leo lobortis eget.',
+      'Bên cạnh Số chủ đạo, bản đồ thần số học của bạn còn gồm nhiều chỉ số: Số sứ mệnh (tài năng và mục tiêu sống), Số linh hồn (khát khao sâu thẳm), Số nhân cách (hình ảnh bên ngoài), Số thái độ, Số trưởng thành… Khi kết hợp tất cả, bạn có được bức tranh toàn diện và chính xác về con người mình.',
   },
   {
     id: 6,
     title: 'Công cụ bói tình yêu theo thần số học',
     description:
-      'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse malesuada lacus ex, sit amet blandit leo lobortis eget.',
+      'Bằng cách so sánh Số chủ đạo và các chỉ số cốt lõi của hai người, thần số học chỉ ra mức độ hòa hợp, những điểm tương đồng tự nhiên cũng như khác biệt cần dung hòa trong một mối quan hệ. Đây là công cụ thú vị giúp bạn thấu hiểu đối phương và xây dựng tình yêu, tình bạn bền vững hơn.',
   },
 ]
 export default function NumerologyInfo() {
@@ -74,119 +74,7 @@ export default function NumerologyInfo() {
           <Box>
             <TittlePage>Ý nghĩa các con số trong thần số học</TittlePage>
             <Box mt={2.5}>
-              <Grid container bgcolor={'#081D2D'}>
-                <Grid item xs={6} lg={8}>
-                  <Grid
-                    container
-                    borderTop={'2px solid #0E263B'}
-                    borderLeft={'2px solid #0E263B'}
-                  >
-                    {Array.from(Array(12).keys()).map((item) => (
-                      <Grid
-                        key={item}
-                        item
-                        xs={6}
-                        md={4}
-                        lg={3}
-                        borderBottom={'2px solid #0E263B'}
-                        borderRight={'2px solid #0E263B'}
-                      >
-                        <Box
-                          py={'14px'}
-                          // px={5}
-                          height={'120px'}
-                          textAlign={'center'}
-                        >
-                          <Typography
-                            sx={{
-                              fontFamily: 'var(--philosopher-font)',
-                              fontSize: 26,
-                              lineHeight: '29px',
-                            }}
-                          >
-                            Số
-                          </Typography>
-                          <Typography
-                            component={'span'}
-                            color="primary"
-                            sx={{
-                              fontFamily: 'var(--philosopher-font)',
-                              fontSize: 70,
-                              lineHeight: '78px',
-                              fontWeight: 700,
-                            }}
-                          >
-                            {item + 1}
-                          </Typography>
-                        </Box>
-                      </Grid>
-                    ))}
-                  </Grid>
-                </Grid>
-                <Grid
-                  item
-                  xs={6}
-                  lg={4}
-                  sx={{
-                    border: '2px solid #0E263B',
-                    borderLeft: 0,
-                    height: 'inherit',
-                  }}
-                >
-                  <Box
-                    py={'14px'}
-                    sx={{
-                      px: {
-                        xs: 2,
-                        md: 5,
-                      },
-                    }}
-                    height={'100%'}
-                  >
-                    <Box>
-                      <Typography
-                        sx={{
-                          fontFamily: 'var(--philosopher-font)',
-                          fontSize: 26,
-                          lineHeight: 0,
-                        }}
-                      >
-                        Số
-                        <Typography
-                          component={'span'}
-                          color="primary"
-                          sx={{
-                            fontFamily: 'var(--philosopher-font)',
-                            fontSize: 70,
-                            fontWeight: 700,
-                            marginLeft: 1.5,
-                            lineHeight: '50px',
-                          }}
-                        >
-                          1
-                        </Typography>
-                      </Typography>
-                    </Box>
-                    <Typography mt={2.5}>
-                      Thần số học số 1 là hiện thân của sự táo bạo, đổi mới,
-                      chấp nhận rủi ro, khả năng phục hồi và đi theo trái tim
-                      mình. Nhân số học số 1 giúp phát triển sự sáng tạo và sự
-                      tự tin của bạn trong mọi khía cạnh của cuộc sống. Mục đích
-                      sống của những người có số chủ đạo 1 là mang tới năng
-                      lượng sáng tạo tích cực, đạt được sự độc lập trong các mối
-                      quan hệ của bản thân.
-                    </Typography>
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      sx={{ mt: 4 }}
-                      endIcon={<ChevronRightIcon fontSize="large" />}
-                    >
-                      Xem chi tiết
-                    </Button>
-                  </Box>
-                </Grid>
-              </Grid>
+              <NumberMeaningExplorer />
             </Box>
           </Box>
 

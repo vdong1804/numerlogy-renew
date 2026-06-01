@@ -1,4 +1,5 @@
 import { Box, Button, Container, Fab, Typography } from '@mui/material'
+import { useRouter } from 'next/router'
 import * as React from 'react'
 
 import { IconChevronBottom } from '@/components/icon'
@@ -16,6 +17,7 @@ export interface IBannerSearchResultPageProps {
 export default function BannerSearchResultPage({
   userInfo: { name, birthday, mainNumber, isVip = false },
 }: IBannerSearchResultPageProps) {
+  const router = useRouter()
   return (
     <Box id="banner-search-result">
       <Container maxWidth={false}>
@@ -89,7 +91,11 @@ export default function BannerSearchResultPage({
                   gia tại tracuuthansohoc.com đã nghiên cứu cho toàn bộ chỉ số
                   của bạn, vui lòng nâng cấp tài khoản VIP!
                 </Typography>
-                <Button variant="contained" sx={{ mt: 1.25 }}>
+                <Button
+                  variant="contained"
+                  sx={{ mt: 1.25 }}
+                  onClick={() => router.push('/shop')}
+                >
                   Nâng cấp vip
                 </Button>
               </Box>

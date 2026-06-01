@@ -15,11 +15,13 @@ from fastapi import APIRouter
 
 from app.routers.numerology_paid import router as _paid_router
 from app.routers.numerology_free import router as _free_router
+from app.routers.numerology_report import router as _report_router
 
 # Primary router — prefix /api so endpoints are /api/so-hoc, /api/so-hoc-free, etc.
 router = APIRouter(prefix='/api', tags=['numerology'])
 router.include_router(_paid_router)
 router.include_router(_free_router)
+router.include_router(_report_router)
 
 # Exported alias for orchestrator wiring in app/main.py
 numerology_router = router

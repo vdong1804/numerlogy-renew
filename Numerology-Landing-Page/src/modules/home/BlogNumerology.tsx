@@ -3,6 +3,7 @@ import 'swiper/css/pagination'
 import 'swiper/css/navigation'
 
 import { Box, Button, Container } from '@mui/material'
+import { useRouter } from 'next/router'
 import { useCallback, useRef } from 'react'
 import type { Swiper as SwiperType } from 'swiper'
 import { Keyboard, Navigation, Pagination } from 'swiper'
@@ -17,6 +18,7 @@ import numerologyApi from '@/pages/api/numerologyApi'
 import { BlogNumerologyCard, TittlePage } from './parts'
 
 export default function BlogNumerology() {
+  const router = useRouter()
   const sliderRef = useRef<SwiperType>()
   const handlePrev = useCallback(() => {
     if (!sliderRef.current) return
@@ -97,6 +99,7 @@ export default function BlogNumerology() {
           <Button
             variant="outlined"
             sx={{ position: 'absolute', top: 'calc(100% + 32px)', right: 0 }}
+            onClick={() => router.push('/blog')}
           >
             Xem tất cả
           </Button>

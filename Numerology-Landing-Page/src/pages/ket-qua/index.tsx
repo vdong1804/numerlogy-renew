@@ -10,33 +10,13 @@ import { Main } from '@/layouts/Main'
 import { Meta } from '@/layouts/Meta'
 import type { NextPageWithLayout } from '@/models'
 import {
-  ApproachAttitude,
-  AttitudeIndicator,
   BannerSearchResultPage,
-  CapacityIndicator,
-  ChallengeIndicators,
-  ChallengePersonalityIndicators,
-  ChallengeSoulIndicators,
-  CharacterGroup,
-  ChiSoNoNghiep,
-  CycleFortunes,
-  LifeCycle,
-  LifeNumber,
-  MatureCapacityIndicators,
-  MatureIndicators,
-  MissionIndicators,
-  MonthIndicators,
-  MotivationIndicator,
-  NaturalPowerIndicator,
-  OvercomeDifficulties,
-  PersonalityIndicators,
-  PowerChart,
-  PyramidNumerology,
-  SoulIndicators,
-  SummaryChart,
-  ThinkingIndicator,
-  WeaknessIndicators,
-  YearIndicators,
+  ChallengesSection,
+  CoreNumbersSection,
+  LifePeaksSection,
+  MainNumberDetail,
+  PersonalCycleSection,
+  PowerChartSection,
 } from '@/modules/result'
 import { BoxExportPDF } from '@/modules/result/parts'
 import { useStore } from '@/store/useStore'
@@ -44,13 +24,15 @@ import { useStore } from '@/store/useStore'
 import type { MainstreamNumberParams } from '../api/numerologyApi'
 import numerologyApi from '../api/numerologyApi'
 
+const IS_VIP = false
+
 const SearchResultPage: NextPageWithLayout = () => {
-  const [isloadingPDF, setIsLoadingPDF] = useState(false)
+  const [isLoadingPDF, setIsLoadingPDF] = useState(false)
   const { customerInfo } = useStore((state) => ({
     customerInfo: state.customerInfo,
   }))
 
-  const mainstreamNumberParamss: MainstreamNumberParams = useMemo(
+  const params: MainstreamNumberParams = useMemo(
     () => ({
       full_name: customerInfo.name,
       birth_day: dayjs(customerInfo.birthDay)?.format('DDMMYYYY') || '',
@@ -58,33 +40,32 @@ const SearchResultPage: NextPageWithLayout = () => {
     }),
     [customerInfo]
   )
-  const { data: mainstreamNumberInfo, isLoading } = useSWR(
-    customerInfo.birthDay ? 'mainstream_number' : null,
-    () => numerologyApi.getMainstreamNumber(mainstreamNumberParamss)
+
+  const { data: reportRes, isLoading } = useSWR(
+    customerInfo.birthDay ? ['numerology_report', params] : null,
+    () => numerologyApi.getNumerologyReport(params)
   )
-  const userInfo = useMemo(() => {
-    return {
+  const report = reportRes?.data
+
+  const userInfo = useMemo(
+    () => ({
       name: customerInfo.name,
       birthday: dayjs(customerInfo.birthDay)?.format('DD/MM/YYYY') || '',
-      mainNumber: mainstreamNumberInfo?.data.so_chu_dao.code || 0,
-      isVip: false,
-    }
-  }, [customerInfo, mainstreamNumberInfo])
+      mainNumber: Number(report?.so_chu_dao.code) || 0,
+      isVip: IS_VIP,
+    }),
+    [customerInfo, report]
+  )
+
   const handleDownloadPDF = async () => {
     setIsLoadingPDF(true)
     try {
-      const response = await numerologyApi.getMainstreamPDF(
-        mainstreamNumberParamss
-      )
+      const response = await numerologyApi.getMainstreamPDF(params)
       const blob = new Blob([response], { type: 'application/pdf' })
       const fileURL = URL.createObjectURL(blob)
-      // window.open(fileURL)
       const link = document.createElement('a')
       link.href = fileURL
-      link.setAttribute(
-        'download',
-        `${customerInfo.name.split(' ').join('_')}.pdf`
-      )
+      link.setAttribute('download', `${customerInfo.name.split(' ').join('_')}.pdf`)
       document.body.appendChild(link)
       link.click()
     } catch (error) {
@@ -94,48 +75,36 @@ const SearchResultPage: NextPageWithLayout = () => {
       setIsLoadingPDF(false)
     }
   }
+
   if (!customerInfo.name) return <NotFound404 />
 
   return (
     <Box className="search-results-page-wrapper">
-      <Loading isOpen={isLoading || isloadingPDF} />
+      <Loading isOpen={isLoading || isLoadingPDF} />
       <BannerSearchResultPage userInfo={userInfo} />
       <Box pt={9} pb={23}>
         <Container maxWidth={false}>
-          <Box sx={{ display: 'flex', flexDirection: 'column', rowGap: 3.75 }}>
-            <CycleFortunes isVip={false} />
-            <CharacterGroup isVip={false} />
-            <LifeNumber isVip={false} />
-            <LifeCycle isVip={false} />
-            <PyramidNumerology isVip={false} />
-            <YearIndicators isVip={false} />
-            <MonthIndicators isVip={false} />
-            <MissionIndicators isVip={false} />
-            <ChallengeIndicators isVip={false} />
-            <MatureIndicators isVip={false} />
-            <MatureCapacityIndicators isVip={false} />
-            <SoulIndicators isVip={false} />
-            <ChallengeSoulIndicators isVip={false} />
-            <PersonalityIndicators isVip={false} />
-            <ChallengePersonalityIndicators isVip={false} />
-            <WeaknessIndicators isVip={false} />
-            <ChiSoNoNghiep isVip={false} />
-            <PowerChart isVip={false} />
-            <SummaryChart isVip={false} />
-            <AttitudeIndicator isVip={false} />
-            <NaturalPowerIndicator isVip={false} />
-            <OvercomeDifficulties isVip={false} />
-            <ThinkingIndicator isVip={false} />
-            <MotivationIndicator isVip={false} />
-            <CapacityIndicator isVip={false} />
-            <ApproachAttitude isVip={false} />
-            <BoxExportPDF onClick={handleDownloadPDF} />
-          </Box>
+          {report && (
+            <Box sx={{ display: 'flex', flexDirection: 'column', rowGap: 6 }}>
+              <MainNumberDetail indicator={report.so_chu_dao} />
+              <CoreNumbersSection core={report.core_numbers} isVip={IS_VIP} />
+              <LifePeaksSection peaks={report.peaks} isVip={IS_VIP} />
+              <ChallengesSection challenges={report.challenges} isVip={IS_VIP} />
+              <PersonalCycleSection personal={report.personal} isVip={IS_VIP} />
+              <PowerChartSection
+                powerChart={report.power_chart}
+                missingNumbers={report.missing_numbers}
+                isVip={IS_VIP}
+              />
+              <BoxExportPDF onClick={handleDownloadPDF} />
+            </Box>
+          )}
         </Container>
       </Box>
     </Box>
   )
 }
+
 SearchResultPage.getLayout = function getLayout(page: ReactElement) {
   return (
     <Main
@@ -147,7 +116,5 @@ SearchResultPage.getLayout = function getLayout(page: ReactElement) {
     </Main>
   )
 }
-// export default dynamic(() => Promise.resolve(SearchResultPage), {
-//   ssr: false,
-// })
+
 export default SearchResultPage
