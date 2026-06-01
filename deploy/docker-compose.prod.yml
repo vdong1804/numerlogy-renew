@@ -1,0 +1,119 @@
+# =============================================================================
+# Unified production stack — deploys ALL Numerology projects on one host.
+#
+#   frontend  Next.js landing page   → nhansinhquan.vn, www.nhansinhquan.vn
+#   api       FastAPI backend + CMS  → api.nhansinhquan.vn, cms.nhansinhquan.vn
+#   db        PostgreSQL 16 + pgvector
+#   nginx     single reverse proxy + TLS termination for all subdomains
+#   certbot   Let's Encrypt cert issuance + auto-renewal
+#
+# Usage (from this deploy/ dir on the server):
+#   bash init-letsencrypt.sh   # first time only — obtain certs
+#   bash deploy.sh             # build + migrate + (re)start everything
+# =============================================================================
+
+services:
+  # ---------------------------------------------------------------------------
+  # Next.js landing page (frontend). NEXT_PUBLIC_* vars are inlined at BUILD
+  # time, so they are passed as build args (not runtime env).
+  # ---------------------------------------------------------------------------
+  frontend:
+    build:
+      context: ../Numerology-Landing-Page
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_BASE: ${NEXT_PUBLIC_API_BASE:-https://api.nhansinhquan.vn}
+        API_ENDPOINT: ${NEXT_PUBLIC_API_BASE:-https://api.nhansinhquan.vn}
+        NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-https://nhansinhquan.vn}
+        NEXT_PUBLIC_GA4_ID: ${NEXT_PUBLIC_GA4_ID:-}
+        NEXT_PUBLIC_FB_PIXEL_ID: ${NEXT_PUBLIC_FB_PIXEL_ID:-}
+        NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${NEXT_PUBLIC_TURNSTILE_SITE_KEY:-}
+        NEXT_PUBLIC_SENTRY_DSN: ${NEXT_PUBLIC_SENTRY_DSN:-}
+    expose:
+      - "3003"
+    restart: unless-stopped
+    # No host ports — nginx is the only public entry point.
+
+  # ---------------------------------------------------------------------------
+  # FastAPI backend (serves api.* and cms.* subdomains). Runs Alembic
+  # migrations on boot, then gunicorn with uvicorn workers.
+  # ---------------------------------------------------------------------------
+  api:
+    build:
+      context: ../numerology-api
+      dockerfile: Dockerfile
+    env_file: ./.env.prod
+    command: >
+      sh -c "alembic upgrade head &&
+             gunicorn app.main:app
+               -w 4
+               -k uvicorn.workers.UvicornWorker
+               -b 0.0.0.0:8000
+               --timeout 120
+               --access-logfile -
+               --error-logfile -"
+    expose:
+      - "8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - media_data:/code/media
+      - static_data:/code/static
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------------------
+  # PostgreSQL 16 with pgvector (required by alembic migration 0010 — chatbot
+  # RAG knowledge-base tables). Not exposed to the host.
+  # ---------------------------------------------------------------------------
+  db:
+    image: pgvector/pgvector:pg16
+    env_file: ./.env.prod
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-numerology} -d ${POSTGRES_DB:-numerology}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------------------
+  # nginx — single reverse proxy for every subdomain + TLS termination.
+  # Cert files and ACME webroot are bind-mounted from ./certbot.
+  # ---------------------------------------------------------------------------
+  nginx:
+    image: nginx:1.27-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./certbot/conf:/etc/letsencrypt:ro
+      - ./certbot/www:/var/www/certbot:ro
+      - media_data:/srv/media:ro
+      - static_data:/srv/static:ro
+    depends_on:
+      - api
+      - frontend
+    restart: unless-stopped
+    # Reload nginx every 6h so renewed certs are picked up without downtime.
+    command: >
+      sh -c "while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g 'daemon off;'"
+
+  # ---------------------------------------------------------------------------
+  # certbot — renews certificates every 12h (no-op until a cert is near expiry).
+  # ---------------------------------------------------------------------------
+  certbot:
+    image: certbot/certbot:latest
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    entrypoint: >
+      sh -c "trap exit TERM; while :; do certbot renew --webroot -w /var/www/certbot --quiet; sleep 12h & wait $${!}; done"
+
+volumes:
+  pg_data:
+  media_data:
+  static_data:

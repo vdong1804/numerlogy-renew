@@ -1,0 +1,9 @@
+# Secrets — never commit
+.env.prod
+
+# Let's Encrypt certs + ACME challenge state (generated on the server)
+certbot/
+
+# Backup dumps
+backups/
+*.sql.gz

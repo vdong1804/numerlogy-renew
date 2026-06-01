@@ -1,0 +1,22 @@
+# VCS / local / secrets
+.git
+.gitignore
+.env
+.env.*
+
+# Python caches / virtualenv
+.venv
+__pycache__
+*.pyc
+*.pyo
+.pytest_cache
+.ruff_cache
+.coverage
+htmlcov
+
+# Not needed in the production image
+tests
+.claude
+
+# User uploads live in a mounted volume, not the image
+media
