@@ -44,6 +44,12 @@ docker compose -f docker-compose.prod.yml --env-file .env.prod run --rm api pyth
 docker compose -f docker-compose.prod.yml --env-file .env.prod run --rm api \
   python -m scripts.create_superuser --email admin@nhansinhquan.vn --password "STRONG_PASSWORD"
 
+# 3b. Seed media files into the runtime volume (blog images + sample reports the
+#     seeded DB rows point at). They live in the repo but the image excludes
+#     ./media (it is a volume), so copy them in once. sudo because the container
+#     created ./media as root.
+sudo cp -rn ../numerology-api/media/. ./media/ && sudo chmod -R a+rX ./media
+
 # 4. Configure your host nginx + TLS, then verify:
 curl http://127.0.0.1:8000/health     # → {"status":"ok"}
 ```
