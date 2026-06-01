@@ -34,9 +34,8 @@ htmlcov/
 .DS_Store
 Thumbs.db
 
-# Alembic
-alembic/versions/*.py
-!alembic/versions/.gitkeep
+# Alembic — migrations MUST be committed (they define the production schema).
+# Only ignore the autogenerate scratch files, never the versions themselves.
 
 # Logs
 *.log
