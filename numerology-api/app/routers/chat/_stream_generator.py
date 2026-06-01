@@ -4,14 +4,13 @@
 Extracted from messages.py to keep that router under 200 LOC.
 Called by stream_message; top-level so it is directly importable and testable.
 
-Pipeline (steps 3-9, steps 1-2 handled in messages.py before generator starts):
+Pipeline (steps 3-8, steps 1-2 handled in messages.py before generator starts):
   3. Retrieval
   4. Prompt build
   5. Semantic cache lookup → hit: yield cached answer, decrement, done
-  6. Prompt cache lookup / maybe_create → gemini_cache_id
-  7. LLM streaming with optional cached_content
-  8. Semantic cache insert (fire-and-forget)
-  9. Persist assistant + decrement quota + commit → emit citations + done
+  6. LLM streaming (DeepSeek auto-caches identical prompts server-side)
+  7. Semantic cache insert (fire-and-forget)
+  8. Persist assistant + decrement quota + commit → emit citations + done
 """
 
 from __future__ import annotations
@@ -34,7 +33,6 @@ from app.services.chat.chat_turn import (
 from app.services.chat.citation_parser import build_citations
 from app.services.chat.embedding_service import EmbeddingService
 from app.services.chat.llm_service import LlmError, LlmService, StreamResult
-from app.services.chat.prompt_cache_service import PromptCacheService
 from app.services.chat.quota_service import QuotaConflictError, QuotaDecision, QuotaService
 from app.services.chat.semantic_cache_service import SemanticCacheService
 from app.services.chat.sse_formatter import sse_event
@@ -137,34 +135,13 @@ async def generate_sse_events(  # noqa: C901
             )
             return
 
-        # Step 6: prompt cache lookup / maybe_create
-        pc_svc = PromptCacheService(db=db, client_provider=lambda: llm.client)
-        cache_key = PromptCacheService.compute_key(
-            prompt.system, [c.chunk_id for c in chunks], tier
-        )
-        pc_result = await pc_svc.get_live_handle(cache_key)
-        gemini_cache_id: Optional[str] = None
-        if pc_result is not None:
-            gemini_cache_id = pc_result.gemini_cache_id
-        else:
-            maybe = await pc_svc.maybe_create(
-                cache_key=cache_key,
-                system=prompt.system,
-                kb_chunks=[{"content": c.content, "title": c.title or ""} for c in chunks],
-                tier=tier,
-                model=llm.model_id(tier),
-            )
-            if maybe is not None:
-                gemini_cache_id = maybe.gemini_cache_id
-
-        # Step 7: stream tokens
+        # Step 6: stream tokens (DeepSeek auto-caches identical prompts server-side).
         stream_result = StreamResult()
         async for token in llm.generate_stream(
             prompt.system,
             prompt.user_content,
             tier=tier,
             result=stream_result,
-            cached_content=gemini_cache_id,
         ):
             accumulated += token
             yield sse_event("delta", {"token": token})
@@ -172,10 +149,9 @@ async def generate_sse_events(  # noqa: C901
         if not accumulated:
             raise LlmError("LLM returned empty stream response")
 
-        # Step 6b: parse citations
         citations = build_citations(accumulated, chunks)
 
-        # Step 9: persist assistant message + quota — commit BEFORE cache insert (M5 fix).
+        # Step 8: persist assistant message + quota — commit BEFORE cache insert (M5 fix).
         asst_msg = await persist_assistant_message(
             db,
             conversation_id,
@@ -198,7 +174,7 @@ async def generate_sse_events(  # noqa: C901
             )
         await db.commit()  # assistant message + quota committed — independent of cache insert
 
-        # Step 8: semantic cache insert in own transaction (fire-and-forget).
+        # Step 7: semantic cache insert in own transaction (fire-and-forget).
         # Skip no-info canary to prevent caching stale responses permanently (M4 fix).
         if accumulated.strip() != NO_INFO_VI:
             try:

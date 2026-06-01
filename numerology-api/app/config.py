@@ -76,11 +76,14 @@ class Settings(BaseSettings):
     bank_code: str = ""  # vd "VCB", "MB", "ACB" — SePay bank code
     bank_name: str = ""
 
-    # Gemini / RAG chatbot (Phase 01)
+    # Gemini — embeddings only (text-embedding-004, 768-dim)
     gemini_api_key: str = ""
     embedding_model: str = "text-embedding-004"
-    gemini_flash_model: str = "gemini-2.0-flash"
-    gemini_pro_model: str = "gemini-2.0-pro"
+
+    # DeepSeek — chat generation (OpenAI-compatible API)
+    deepseek_api_key: str = ""
+    deepseek_base_url: str = "https://api.deepseek.com"
+    deepseek_chat_model: str = "deepseek-chat"
     # Embedding batch & chunking
     embedding_batch_size: int = 100
     chunk_max_tokens: int = 500
@@ -112,13 +115,6 @@ class Settings(BaseSettings):
     rate_limit_ip_capacity: float = 5.0
     rate_limit_ip_refill_per_sec: float = 0.05
     rate_limit_ip_daily_cap: int = 50
-
-    # Prompt cache — Gemini explicit caches (Phase 06)
-    # Minimum same-key hits before creating a Gemini explicit cache.
-    # Prevents one-shot waste on rarely-reused prompt+KB combinations.
-    prompt_cache_hit_threshold: int = 5
-    # TTL for each cache handle in seconds; refreshed on every cache hit.
-    prompt_cache_ttl_seconds: int = 3600
 
     @field_validator("sepay_webhook_ip_whitelist", mode="before")
     @classmethod

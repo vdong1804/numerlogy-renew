@@ -228,7 +228,7 @@ PDF_CHUNK_OVERLAP_TOKENS=50               # Overlap (same as KB)
 
 **Core Services:**
 - **RetrievalService:** pgvector top-k cosine similarity (free tier: 3 chunks, threshold 0.6; paid tier configurable)
-- **LlmService:** Gemini Flash/Pro wrapper with 30s timeout, streaming-ready handler, empty-response guard
+- **LlmService:** DeepSeek chat (`deepseek-chat`, OpenAI-compatible SDK) with 30s timeout, streaming-ready handler, empty-response guard
 - **PromptBuilder:** System prompt with anti-hallucination contract ("Tôi không có đủ thông tin để trả lời câu hỏi này." when KB insufficient), user message sanitization, chat history max 5 turns
 - **CitationParser:** Regex-based [N] extraction from LLM text, bounds-check against chunk list, dedup + sort
 
@@ -244,7 +244,7 @@ RAG_TOP_K_FREE=3              # Chunks per query (free users)
 RAG_TOP_K_PAID=8              # Chunks per query (paid users)
 RAG_SIM_THRESHOLD=0.6         # Cosine similarity floor
 HISTORY_MAX_MESSAGES=5        # Prior turns in prompt
-LLM_TIMEOUT_SECONDS=30        # Gemini API call timeout
+LLM_TIMEOUT_SECONDS=30        # LLM API call timeout
 ```
 
 **Message Schema:**
@@ -379,7 +379,7 @@ PDF_CHUNK_OVERLAP_TOKENS=50               # Overlap (same as KB)
 
 **Core Services:**
 - **RetrievalService:** pgvector top-k cosine similarity (free tier: 3 chunks, threshold 0.6; paid tier configurable)
-- **LlmService:** Gemini Flash/Pro wrapper with 30s timeout, streaming-ready handler, empty-response guard
+- **LlmService:** DeepSeek chat (`deepseek-chat`, OpenAI-compatible SDK) with 30s timeout, streaming-ready handler, empty-response guard
 - **PromptBuilder:** System prompt with anti-hallucination contract ("Tôi không có đủ thông tin để trả lời câu hỏi này." when KB insufficient), user message sanitization, chat history max 5 turns
 - **CitationParser:** Regex-based [N] extraction from LLM text, bounds-check against chunk list, dedup + sort
 
@@ -395,7 +395,7 @@ RAG_TOP_K_FREE=3              # Chunks per query (free users)
 RAG_TOP_K_PAID=8              # Chunks per query (paid users)
 RAG_SIM_THRESHOLD=0.6         # Cosine similarity floor
 HISTORY_MAX_MESSAGES=5        # Prior turns in prompt
-LLM_TIMEOUT_SECONDS=30        # Gemini API call timeout
+LLM_TIMEOUT_SECONDS=30        # LLM API call timeout
 ```
 
 **Message Schema:**
@@ -407,9 +407,9 @@ LLM_TIMEOUT_SECONDS=30        # Gemini API call timeout
 
 **Purpose:** Monetize chat via per-message quota (free 3/day) + add-on packs (Flash/Pro, 30d). See Phase 05 changelog for full details.
 
-### 2f. Chat Caching + Rate Limiting (Chatbot RAG — Phase 06)
+### 2f. Chat Rate Limiting (Chatbot RAG — Phase 06)
 
-**Purpose:** Optimize cost (semantic cache + Gemini prompt caching) and prevent abuse (two-bucket rate limiting on user + IP) with fail-closed semantics.
+**Purpose:** Prevent abuse via two-bucket rate limiting (per-user + per-IP) with fail-closed semantics. Prompt caching removed as part of DeepSeek migration (DeepSeek auto-caches identical prompts server-side; semantic cache retained).
 
 ### 2g. Admin Chatbot Tuning (Chatbot RAG — Phase 07)
 
@@ -437,7 +437,6 @@ LLM_TIMEOUT_SECONDS=30        # Gemini API call timeout
 |-------|---------|-------------|
 | `semantic_cache_entries` | Cached responses for semantically-similar queries | `tier` (user tier scoped), `embedding` (Vector(768)), `answer` (text), `ttl_expires_at` (24h), HNSW cosine index |
 | `rate_limit_buckets` | Token bucket counters (per-user + per-IP) | `user_id` or `ip_address` (unique scope), `bucket_type` (user\|ip), `tokens` (NUMERIC(10,2)), `daily_reset_date` (Asia/Bangkok), `daily_cap_refill_at` |
-| `prompt_cache_handles` | Gemini cached_content resource names | `cache_key` (SHA-256), `gemini_cache_id` (resource name), `hit_count` (in-process counter), `expires_at` (1h TTL, refresh on hit), `created_at` |
 
 **Pipeline (Atomic Order — Both Sync + Stream):**
 1. Auth + user message persist (pre-commit)
@@ -445,11 +444,10 @@ LLM_TIMEOUT_SECONDS=30        # Gemini API call timeout
 3. **Rate limit check** (429 if buckets allow=false; two-bucket atomic: user + IP both evaluated, fail-closed on DB error)
 4. Retrieval (KB + PDF hybrid)
 5. **Semantic cache lookup** (cosine ≥0.92, tier-scoped, 24h TTL; NO_INFO_VI responses skipped)
-6. **Prompt cache get_or_create** (SHA-256 cache_key, lazy threshold 5 hits, TTL 1h with refresh on hit, broad-strokes invalidation gated on KB content-hash short-circuit)
-7. LLM call (with `cached_content=gemini_cache_id` if hit)
-8. **Semantic cache insert** (fire-and-forget, own transaction post-commit, skips NO_INFO)
-9. Persist assistant + quota decrement + commit
-10. Return + cache hit response shape (stream: 40-char delta, done event: `from_cache=True`)
+6. LLM call (DeepSeek auto-caches identical prompts server-side)
+7. **Semantic cache insert** (fire-and-forget, own transaction post-commit, skips NO_INFO)
+8. Persist assistant + quota decrement + commit
+9. Return + cache hit response shape (stream: 40-char delta, done event: `from_cache=True`)
 
 **SemanticCacheService:**
 - `lookup(content, tier) -> answer|None` — pgvector cosine top-1, threshold 0.92
@@ -462,14 +460,6 @@ LLM_TIMEOUT_SECONDS=30        # Gemini API call timeout
   - IP bucket: 5 cap/0.05s (50/day), stateless overflow
 - **Fail-closed on DB error:** Any exception → `allowed=False, reason="rate_limit_unavailable"` (not fail-open as Phase 05 review flagged)
 - Lock released before LLM call (single transaction commits rate-limit row immediately, then LLM outside lock)
-
-**PromptCacheService:**
-- `get_live_handle(cache_key) -> gemini_cache_id|None` — SELECT live handle, refresh TTL on hit
-- `maybe_create(cache_key, prompt) -> gemini_cache_id|None` — lazy creation at 5 in-process hits (hit counter per cache_key)
-  - Creates `CachedContent` via `client.caches.create()`; TTL 1h, auto-refreshes on hit
-  - Race condition: concurrent threshold trips both call Gemini (second INSERT rolls back, orphan lifetime-expires)
-- `invalidate_for_chunks_sync(sentinel_ids)` — broad-strokes DELETE all handles when KB content changes (gated by content-hash short-circuit in kb_ingestion_service to avoid spurious invalidation)
-- `cleanup_expired()` — nightly delete TTL-expired rows (part of cleanup job)
 
 **HTTP 429 Response (Rate Limited):**
 ```
@@ -495,7 +485,7 @@ Content-Type: application/json
 
 **Background Job (cleanup_semantic_cache.py):**
 - Runs nightly at 03:15 UTC
-- Calls `SemanticCacheService.cleanup_expired()` + `PromptCacheService.cleanup_expired()`
+- Calls `SemanticCacheService.cleanup_expired()`
 - Separate sessions, one implicit transaction (all-or-nothing semantics for nightly cleanup)
 
 **New Tables:**

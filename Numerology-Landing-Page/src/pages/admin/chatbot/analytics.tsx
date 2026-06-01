@@ -146,7 +146,6 @@ function CacheStatsCard({
             <Stat label="Hit rate" value={data ? `${(data.semantic_cache_hit_rate * 100).toFixed(1)}%` : '—'} />
             <Stat label="Semantic hits" value={data?.semantic_cache_hits.toLocaleString() ?? '—'} />
             <Stat label="Semantic entries" value={data?.semantic_cache_entries.toLocaleString() ?? '—'} />
-            <Stat label="Prompt handles" value={data?.prompt_cache_active_handles.toLocaleString() ?? '—'} />
             <Stat label="Tổng USD" value={data ? `$${data.estimated_total_cost_usd.toFixed(2)}` : '—'} />
           </dl>
         )}

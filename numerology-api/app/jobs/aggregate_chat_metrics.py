@@ -23,9 +23,8 @@ from decimal import Decimal
 
 from sqlalchemy import text
 
-from app.config import settings
 from app.db.session import async_session_factory
-from app.services.chat.cost_monitor_service import PRICING, CostMonitorService
+from app.services.chat.cost_monitor_service import CostMonitorService
 
 logger = logging.getLogger(__name__)
 
@@ -56,8 +55,6 @@ async def _recompute_for_date(db, target: date) -> dict:
     msg_free = msg_paid = cache_hits = 0
     in_total = out_total = 0
     cost = Decimal("0")
-    flash_model = settings.gemini_flash_model
-    pro_model = settings.gemini_pro_model
     for model_used, tier, in_t, out_t in rows:
         if model_used == "cache":
             cache_hits += 1
@@ -70,15 +67,8 @@ async def _recompute_for_date(db, target: date) -> dict:
         # Skip cost calc for cache hits (no LLM call billed).
         if model_used == "cache" or not model_used:
             continue
-        model_key = model_used
-        if model_used.startswith("gemini-2.0-flash"):
-            model_key = flash_model if flash_model in PRICING else "gemini-2.0-flash"
-        elif model_used.startswith("gemini-2.5-pro") or model_used.startswith(
-            "gemini-2.0-pro"
-        ):
-            model_key = pro_model if pro_model in PRICING else "gemini-2.5-pro"
         from app.services.chat.cost_monitor_service import calc_msg_cost  # local import
-        cost += calc_msg_cost(model_key, int(in_t or 0), int(out_t or 0))
+        cost += calc_msg_cost(str(model_used), int(in_t or 0), int(out_t or 0))
 
     new_addons = (
         await db.execute(

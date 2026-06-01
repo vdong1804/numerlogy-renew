@@ -3,11 +3,11 @@
 **Last Generated:** 2026-05-28  
 **Scope:** numerology-api (FastAPI backend) + Numerology-Landing-Page (Next.js frontend)
 
-> **Phase 06 Highlights (Chatbot RAG — Semantic Cache + Prompt Cache + Rate Limit):**
-> - Backend: `app/services/chat/semantic_cache_service.py` (pgvector cosine lookup, tier-scoped, 24h TTL, NO_INFO exclusion), `app/services/chat/rate_limit_service.py` (two-bucket atomic, user+IP, fail-closed, Asia/Bangkok TZ for daily reset), `app/services/chat/prompt_cache_service.py` (SHA256 cache_key, lazy threshold 5, TTL 1h refresh, broad-strokes invalidation), `app/utils/network.py` (get_client_ip), `app/jobs/cleanup_semantic_cache.py` (03:15 nightly cleanup)
-> - Backend models/schema: `semantic_cache_entry`, `rate_limit_bucket`, `prompt_cache_handle` tables; `MessageOut.from_cache` field
-> - Alembic 0013: adds 3 new tables + HNSW index (requires pgvector ≥0.5.0)
-> - Backend modified: `messages.py` (pipeline order: rate limit → quota → retrieval → semantic cache lookup → prompt cache → LLM → cache insert), `_stream_generator.py` (same pipeline, stream variant), `llm_service.py` (+cached_content kwarg, google-genai 1.47.0 confirmed)
+> **Phase 06 Highlights (Chatbot RAG — Semantic Cache + Rate Limit):**
+> - Backend: `app/services/chat/semantic_cache_service.py` (pgvector cosine lookup, tier-scoped, 24h TTL, NO_INFO exclusion), `app/services/chat/rate_limit_service.py` (two-bucket atomic, user+IP, fail-closed, Asia/Bangkok TZ for daily reset), `app/utils/network.py` (get_client_ip), `app/jobs/cleanup_semantic_cache.py` (03:15 nightly cleanup)
+> - Backend models/schema: `semantic_cache_entry`, `rate_limit_bucket` tables; `MessageOut.from_cache` field
+> - Alembic 0013: adds 2 new tables + HNSW index (requires pgvector ≥0.5.0)
+> - Backend modified: `messages.py` (pipeline order: rate limit → quota → retrieval → semantic cache lookup → LLM → cache insert), `_stream_generator.py` (same pipeline, stream variant), `llm_service.py` (DeepSeek via OpenAI SDK)
 > - Frontend: `use-rate-limit-countdown.ts` hook, `useRateLimitCountdown` countdown hint + button disable, HTTP 429 handler with Retry-After parsing, Sonner toast variants (bucket_empty, daily_cap)
 > - Scheduler: `cleanup_semantic_cache.run()` wired at `cron(hour=3, minute=15)` UTC
 > - Tests: 345 total pass, 0 failed (4 pre-existing pgvector skips). Ruff + tsc + lint clean.

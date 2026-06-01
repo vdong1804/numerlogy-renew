@@ -6,21 +6,19 @@ How daily cost is computed, alerted on, and read back from the dashboard.
 
 | Model | Input | Output | Cached input |
 |---|---|---|---|
-| `gemini-2.0-flash` | $0.10 | $0.40 | $0.025 |
-| `gemini-2.5-pro` | $1.25 | $5.00 | $0.31 |
+| `deepseek-chat` | $0.27 | $1.10 | $0.07 |
 | `text-embedding-004` | $0.025 | n/a | n/a |
 
-Source of truth: `app/services/chat/cost_monitor_service.py::PRICING`. Update yearly when Gemini revises rates and bump revision date in this doc.
+Source of truth: `app/services/chat/cost_monitor_service.py::MODEL_PRICING`. DeepSeek rates verified against deepseek.com/pricing. Update when rates change and bump revision date in this doc.
 
 ## Cost formula
 
 ```
-cost_per_message = ((input_tokens - cached_tokens) × input_rate)
-                 + (cached_tokens × cached_input_rate)
+cost_per_message = (input_tokens × input_rate)
                  + (output_tokens × output_rate)
 ```
 
-Cache hits (semantic cache, no LLM call) cost $0 and bump `cache_hits`, not `cost_usd`.
+Cache hits (semantic cache, no LLM call) cost $0 and bump `cache_hits`, not `cost_usd`. DeepSeek server-side prompt caching is automatic (no app-managed cache_tokens).
 
 ## Data flow
 
@@ -76,15 +74,15 @@ Alert is checked once per hourly tick — duplicates are possible (1×/hour afte
 
 ## Budget math
 
-Target: <$500/month at 10k MAU. With ~3 free msgs/day cap + 25% cache hit rate + ~600 tok avg per Flash call:
+Target: <$500/month at 10k MAU. With ~3 free msgs/day cap + 25% cache hit rate + ~600 tok avg per DeepSeek call:
 
 ```
-flash_msg_cost ≈ 600 × $0.10/1M + 400 × $0.40/1M ≈ $0.00022
-3 msgs × 30 days × 0.75 (cache miss) × $0.00022 ≈ $0.015/user/month
-$0.015 × 10k MAU ≈ $150/month for free tier alone.
+deepseek_msg_cost ≈ (600 × $0.27 + 400 × $1.10) / 1M ≈ $0.00062
+3 msgs × 30 days × 0.75 (cache miss) × $0.00062 ≈ $0.042/user/month
+$0.042 × 10k MAU ≈ $420/month for free tier alone.
 ```
 
-Pro tier adds ~$0.005/message; capped by quota addons. Conservatively budget $500/month covers free + ~15% conversion to paid.
+Pro tier uses same model; quota addons cap spend. Conservatively budget $500/month covers free + ~10% conversion to paid.
 
 ## When pricing changes
 

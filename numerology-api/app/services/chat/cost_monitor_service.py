@@ -1,5 +1,5 @@
 # ruff: noqa: UP045, UP017
-"""CostMonitorService — Gemini cost calculation + threshold alerts (Phase 08).
+"""CostMonitorService — LLM cost calculation + threshold alerts (Phase 08).
 
 Hot path callers: `chat_turn.persist_assistant_message` increments today's
 metrics atomically. The full daily roll-up is owned by
@@ -7,7 +7,7 @@ metrics atomically. The full daily roll-up is owned by
 and reads aggregated state for alerting.
 
 Pricing table is the single source of truth for $/token; bump on each
-Gemini price change and ship together with `chatbot-cost-monitoring.md`
+provider price change and ship together with `chatbot-cost-monitoring.md`
 update.
 """
 
@@ -26,8 +26,16 @@ from app.services.email_service import send_email
 
 logger = logging.getLogger(__name__)
 
-# Gemini pricing, USD per 1 token (as of 2026). Update yearly.
+# Pricing, USD per 1 token. Update on each provider price change.
+# DeepSeek-V3 (chat) is the active model; Gemini entries kept so legacy
+# chat_messages rows still aggregate against their historical price.
+# `cached_input` on DeepSeek reflects the auto-cache-hit price tier.
 PRICING: dict[str, dict[str, float]] = {
+    "deepseek-chat": {
+        "input": 0.27 / 1e6,
+        "output": 1.10 / 1e6,
+        "cached_input": 0.07 / 1e6,
+    },
     "gemini-2.0-flash": {
         "input": 0.10 / 1e6,
         "output": 0.40 / 1e6,

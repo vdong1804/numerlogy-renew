@@ -2,8 +2,6 @@
 """Tests for app/jobs/cleanup_semantic_cache.py.
 
 Uses in-memory SQLite via a patched async_session_factory — no real DB needed.
-Semantic cache and prompt cache tables are created by Base.metadata.create_all
-(driven by conftest engine fixture).
 """
 
 from __future__ import annotations
@@ -11,7 +9,6 @@ from __future__ import annotations
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.services.chat.prompt_cache_service import PromptCacheService
 from app.services.chat.semantic_cache_service import SemanticCacheService
 
 
@@ -31,10 +28,10 @@ async def _count_rows(db: AsyncSession, table: str) -> int:
 
 
 class TestCleanupSemanticCache:
-    async def test_cleanup_returns_counts_for_both_caches(
+    async def test_cleanup_returns_count_for_semantic_cache(
         self, db_session: AsyncSession, monkeypatch
     ):
-        """run() returns dict with semantic_cache and prompt_cache_handles keys."""
+        """run() returns dict with only the semantic_cache key."""
         import app.jobs.cleanup_semantic_cache as job_module
         from unittest.mock import AsyncMock, MagicMock
 
@@ -49,19 +46,15 @@ class TestCleanupSemanticCache:
         async def _sem_cleanup(self):
             return 3
 
-        async def _pc_cleanup(self):
-            return 1
-
         monkeypatch.setattr(SemanticCacheService, "cleanup_expired", _sem_cleanup)
-        monkeypatch.setattr(PromptCacheService, "cleanup_expired", _pc_cleanup)
 
         result = await job_module.run()
-        assert result == {"semantic_cache": 3, "prompt_cache_handles": 1}
+        assert result == {"semantic_cache": 3}
 
-    async def test_cleanup_handles_empty_tables(
+    async def test_cleanup_handles_empty_table(
         self, db_session: AsyncSession, monkeypatch
     ):
-        """run() returns zeros when tables are empty."""
+        """run() returns zero when the table is empty."""
         import app.jobs.cleanup_semantic_cache as job_module
         from unittest.mock import AsyncMock, MagicMock
 
@@ -76,15 +69,10 @@ class TestCleanupSemanticCache:
         async def _sem_cleanup_zero(self):
             return 0
 
-        async def _pc_cleanup_zero(self):
-            return 0
-
         monkeypatch.setattr(SemanticCacheService, "cleanup_expired", _sem_cleanup_zero)
-        monkeypatch.setattr(PromptCacheService, "cleanup_expired", _pc_cleanup_zero)
 
         result = await job_module.run()
         assert result["semantic_cache"] == 0
-        assert result["prompt_cache_handles"] == 0
 
     async def test_cleanup_deletes_only_expired_rows(
         self, db_session: AsyncSession, monkeypatch
@@ -151,11 +139,7 @@ class TestCleanupSemanticCache:
         async def _sem(self):
             return 0
 
-        async def _pc(self):
-            return 0
-
         monkeypatch.setattr(SemanticCacheService, "cleanup_expired", _sem)
-        monkeypatch.setattr(PromptCacheService, "cleanup_expired", _pc)
 
         await job_module.run()
         assert commit_called["n"] == 1
@@ -163,7 +147,7 @@ class TestCleanupSemanticCache:
     async def test_cleanup_result_shape(
         self, db_session: AsyncSession, monkeypatch
     ):
-        """run() always returns dict with both keys regardless of counts."""
+        """run() always returns dict with the semantic_cache key."""
         import app.jobs.cleanup_semantic_cache as job_module
         from unittest.mock import AsyncMock, MagicMock
 
@@ -178,13 +162,8 @@ class TestCleanupSemanticCache:
         async def _sem(self):
             return 10
 
-        async def _pc(self):
-            return 5
-
         monkeypatch.setattr(SemanticCacheService, "cleanup_expired", _sem)
-        monkeypatch.setattr(PromptCacheService, "cleanup_expired", _pc)
 
         result = await job_module.run()
-        assert set(result.keys()) == {"semantic_cache", "prompt_cache_handles"}
+        assert set(result.keys()) == {"semantic_cache"}
         assert result["semantic_cache"] == 10
-        assert result["prompt_cache_handles"] == 5

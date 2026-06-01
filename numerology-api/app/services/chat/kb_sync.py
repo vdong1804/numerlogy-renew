@@ -23,7 +23,6 @@ from app.db.base import Base
 from app.db.session import async_session_factory
 from app.services.chat.embedding_service import EmbeddingService
 from app.services.chat.kb_ingestion_service import KbIngestionService
-from app.services.chat.prompt_cache_service import invalidate_for_chunks_sync
 
 logger = logging.getLogger(__name__)
 
@@ -75,11 +74,8 @@ def _on_delete(mapper, connection, target):  # noqa: ARG001
 def _on_after_commit(session: Session) -> None:
     """Flush pending items onto the asyncio queue after the txn commits.
 
-    Also invalidates all Gemini prompt-cache handles (broad-strokes) when KB
-    chunks change.  Broad-strokes means we delete every handle regardless of
-    which chunks it references, because the cache_key encodes sorted chunk ids
-    but we store no reverse index.  With a 1h TTL the worst-case stale window
-    is eliminated immediately.  Phase 08 adds fine-grained per-chunk lookup.
+    DeepSeek auto-caches identical prompts server-side, so no explicit
+    prompt-cache invalidation is needed when KB content changes.
     """
     pending = session.info.pop(_PENDING_KEY, None)
     if not pending or _queue is None:
@@ -90,16 +86,6 @@ def _on_after_commit(session: Session) -> None:
         except asyncio.QueueFull:
             logger.warning("kb_sync queue full; dropping %s for %s/%s",
                            item[0], item[1], item[2])
-
-    # Invalidate prompt-cache handles so stale Gemini caches are not reused
-    # after KB content changes.  Runs synchronously in the after_commit hook
-    # using a plain SQL DELETE (no async session needed).
-    # pending tuples are (action, source_type, source_ref, title, content);
-    # we pass len(pending) sentinel ids — invalidate_for_chunks_sync uses
-    # broad-strokes DELETE ALL so exact ids are not required, only a non-empty
-    # list to signal that something changed.
-    sentinel_ids = list(range(1, len(pending) + 1))
-    invalidate_for_chunks_sync(session, sentinel_ids)
 
 
 def _on_after_rollback(session: Session) -> None:

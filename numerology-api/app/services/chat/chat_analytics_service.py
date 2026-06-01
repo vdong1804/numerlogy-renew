@@ -21,17 +21,18 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.models.chat.chat_addon_purchase import ChatAddonPurchase
 from app.db.models.chat.conversation import ChatConversation
 from app.db.models.chat.message import ChatMessage
-from app.db.models.chat.prompt_cache_handle import PromptCacheHandle
 from app.db.models.chat.semantic_cache_entry import SemanticCacheEntry
 
-# Gemini pricing per 1M tokens (USD) — Jan 2026, rough.
-# Keys match `chat_messages.model_used`; default fallback used for unknown models.
-GEMINI_PRICING: dict[str, tuple[float, float]] = {
+# Per-1M-token pricing (USD) — keys match `chat_messages.model_used`.
+# DeepSeek-V3 (chat) — current provider; legacy Gemini keys kept so historic
+# rows aggregate against the original price they were billed at.
+MODEL_PRICING: dict[str, tuple[float, float]] = {
+    "deepseek-chat": (0.27, 1.10),
     "gemini-2.0-flash": (0.10, 0.40),
     "gemini-2.0-pro": (1.25, 5.00),
     "gemini-2.5-pro": (1.25, 5.00),
 }
-_DEFAULT_PRICE = (0.20, 0.80)
+_DEFAULT_PRICE = (0.27, 1.10)
 
 
 @dataclass
@@ -69,7 +70,6 @@ class AnalyticsOverview:
     semantic_cache_entries: int
     semantic_cache_hits: int
     semantic_cache_hit_rate: float
-    prompt_cache_active_handles: int
     addon_purchases: int
 
     def to_dict(self) -> dict:
@@ -131,11 +131,6 @@ class ChatAnalyticsService:
             if (semantic_hits + assistant_count) > 0
             else 0.0
         )
-        prompt_cache_active = await self._scalar(
-            select(func.count(PromptCacheHandle.id)).where(
-                PromptCacheHandle.expires_at > datetime.now(timezone.utc)
-            )
-        )
         addon_purchases = await self._scalar(
             select(func.count(ChatAddonPurchase.id)).where(
                 ChatAddonPurchase.purchased_at >= start_dt,
@@ -156,7 +151,6 @@ class ChatAnalyticsService:
             semantic_cache_entries=semantic_entries,
             semantic_cache_hits=semantic_hits,
             semantic_cache_hit_rate=round(hit_rate, 4),
-            prompt_cache_active_handles=prompt_cache_active,
             addon_purchases=addon_purchases,
         )
 
@@ -222,7 +216,7 @@ class ChatAnalyticsService:
         for model, in_toks, out_toks in rows:
             in_n = int(in_toks or 0)
             out_n = int(out_toks or 0)
-            in_price, out_price = GEMINI_PRICING.get(str(model), _DEFAULT_PRICE)
+            in_price, out_price = MODEL_PRICING.get(str(model), _DEFAULT_PRICE)
             cost = (in_n / 1_000_000) * in_price + (out_n / 1_000_000) * out_price
             out.append(
                 CostByModel(
@@ -264,6 +258,6 @@ __all__ = [
     "DailyMessageStat",
     "TopQuestion",
     "CostByModel",
-    "GEMINI_PRICING",
+    "MODEL_PRICING",
     "default_window",
 ]

@@ -124,6 +124,5 @@ export interface AnalyticsOverview {
   semantic_cache_entries: number
   semantic_cache_hits: number
   semantic_cache_hit_rate: number
-  prompt_cache_active_handles: number
   addon_purchases: number
 }

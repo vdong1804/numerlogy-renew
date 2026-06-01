@@ -25,6 +25,7 @@ dependencies = [
     "sentry-sdk[fastapi]>=2.0",
     "slowapi>=0.1.9",
     "google-genai>=0.3",
+    "openai>=1.40,<2",
     "pgvector>=0.3",
     "tiktoken>=0.7",
     "pypdf>=4.0",

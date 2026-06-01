@@ -187,18 +187,18 @@ Unit + integration tests: auth, numerology calc, endpoints, services. Coverage �
 
 ---
 
-### Chatbot RAG Phase 06 — Semantic Cache + Prompt Cache + Rate Limiting (Optimization + Abuse Prevention)
-**Status:** ✅ **Complete** (2026-05-28)
-**Scope:** Optimize cost (semantic cache 24h, Gemini prompt caching 1h) + prevent abuse (two-bucket rate limiting with fail-closed policy). 345 tests pass.
+### Chatbot RAG Phase 06 — Semantic Cache + Rate Limiting (Optimization + Abuse Prevention)
+**Status:** ✅ **Complete** (2026-05-28) — **Superseded by DeepSeek migration (2026-06-01)**
+**Scope:** Optimize cost (semantic cache 24h) + prevent abuse (two-bucket rate limiting with fail-closed policy). Prompt caching removed after LLM migration to DeepSeek (server-side auto-caching). 345→335 tests pass (prompt cache tests removed).
 
 **Backend Deliverables:**
-- Services: SemanticCacheService (pgvector cosine ≥0.92, tier-scoped, 24h TTL, NO_INFO exclusion), RateLimitService (two-bucket atomic user+IP, fail-closed, Asia/Bangkok daily reset), PromptCacheService (SHA256 cache_key, lazy threshold 5 hits, TTL 1h refresh, broad-strokes KB invalidation)
-- Models: SemanticCacheEntry, RateLimitBucket, PromptCacheHandle tables
-- Routers: Pipeline integrated into existing /api/chat/conversations/{id}/messages + stream (rate limit → quota → retrieval → semantic cache → prompt cache → LLM → cache insert)
+- Services: SemanticCacheService (pgvector cosine ≥0.92, tier-scoped, 24h TTL, NO_INFO exclusion), RateLimitService (two-bucket atomic user+IP, fail-closed, Asia/Bangkok daily reset)
+- Models: SemanticCacheEntry, RateLimitBucket tables
+- Routers: Pipeline integrated into existing /api/chat/conversations/{id}/messages + stream (rate limit → quota → retrieval → semantic cache → LLM → cache insert)
 - Jobs: cleanup_semantic_cache.run() nightly 03:15 UTC
-- Modified: messages.py (pipeline ordering), _stream_generator.py (stream variant), llm_service.py (cached_content kwarg, google-genai 1.47.0)
-- Migration 0013: 3 new tables + HNSW index (pgvector ≥0.5.0 required)
-- Tests: 345 total pass, 0 failed (4 pre-existing pgvector skips). Ruff + tsc + lint clean.
+- Modified: messages.py (pipeline ordering), _stream_generator.py (stream variant), llm_service.py (DeepSeek via OpenAI SDK)
+- Migration 0013: 2 new tables + HNSW index (pgvector ≥0.5.0 required)
+- Tests: 335 total pass, 0 failed. Ruff + tsc + lint clean.
 
 **Frontend Deliverables:**
 - Hook: use-rate-limit-countdown (countdown display on message input)
@@ -206,7 +206,8 @@ Unit + integration tests: auth, numerology calc, endpoints, services. Coverage �
 - Toasts: Sonner variants bucket_empty (warn, 3s), daily_cap (error, 8s)
 
 **Configuration:**
-- No new env vars (all settings-backed: SEMANTIC_CACHE_THRESHOLD=0.92, SEMANTIC_CACHE_TTL_HOURS=24, PROMPT_CACHE_HIT_THRESHOLD=5, PROMPT_CACHE_TTL_SECONDS=3600)
+- No new env vars (all settings-backed: SEMANTIC_CACHE_THRESHOLD=0.92, SEMANTIC_CACHE_TTL_HOURS=24)
+- Removed env vars: PROMPT_CACHE_HIT_THRESHOLD, PROMPT_CACHE_TTL_SECONDS (DeepSeek migration, 2026-06-01)
 
 **Code Review (3 Critical + 10 High + 10 Medium):**
 - **C1:** Prompt-cache invalidation fires on every KB sync (defeats cost savings). Fix: hash content in _replace_chunks
@@ -216,11 +217,11 @@ Unit + integration tests: auth, numerology calc, endpoints, services. Coverage �
 - **H2–H10:** Cleanup isolation, ensure_bucket optimization, race conditions, file size guidelines, SSE docs (selectively addressed)
 
 **Known Limitations (Escalated for Lead Decision):**
-- **C1 KB invalidation:** Prompt cache clears on every KB sync (including no-ops). Impact: 75% cost-savings goal defeated during active KB editing. Phase 07: implement content-hash short-circuit
+- **C1 KB invalidation:** Prompt cache removed (DeepSeek migration 2026-06-01). Limitation no longer applies.
 - **C2 TZ ambiguity:** Daily reset at UTC (current). Users in VN see 07:00 local. Document choice explicitly
 - **C3 lock duration:** Rate-limit lock held until request end (5s+ during LLM). Acceptable for v1? Consider session-early-commit
 
-**Next:** Phase 07 (Fix C1 KB invalidation, TZ decision, lock refactor if needed)
+**Next:** Phase 07 (Address C2 TZ decision, C3 lock refactor if needed)
 
 ---
 

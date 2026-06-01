@@ -9,7 +9,6 @@ from app.db.models.chat.feature_flag import ChatFeatureFlag
 from app.db.models.chat.kb_chunk import KbChunk
 from app.db.models.chat.kb_document import KbDocument
 from app.db.models.chat.message import ChatMessage
-from app.db.models.chat.prompt_cache_handle import PromptCacheHandle
 from app.db.models.chat.quota_usage import ChatQuotaUsage
 from app.db.models.chat.rate_limit_bucket import RateLimitBucket
 from app.db.models.chat.semantic_cache_entry import SemanticCacheEntry
@@ -33,7 +32,6 @@ __all__ = [
     "ChatSystemSettingHistory",
     "KbDocument",
     "KbChunk",
-    "PromptCacheHandle",
     "RateLimitBucket",
     "SemanticCacheEntry",
     "UserPdfIndex",

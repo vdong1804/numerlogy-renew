@@ -5,6 +5,41 @@
 
 ---
 
+## [2026-06-01] — DeepSeek LLM Migration (Chat Service)
+
+**Scope:** Migrate chat LLM from Gemini (flash/pro) to DeepSeek (`deepseek-chat`) via OpenAI-compatible SDK. Embeddings remain on Gemini `text-embedding-004`. Prompt caching removed (DeepSeek handles server-side cache). Config simplified; env-vars renamed.
+
+### Backend
+- **LLM Service:** `app/services/chat/llm_service.py` refactored to use `openai.AsyncOpenAI(base_url=https://api.deepseek.com)` with model `deepseek-chat`. Both flash/pro tiers now map to single model.
+- **Public API preserved:** `generate()`, `generate_stream()`, `LlmResponse`, `StreamResult`, `LlmError` signatures unchanged. Removed `cached_content` kwarg.
+- **Embeddings unchanged:** `text-embedding-004` (768-dim), same pgvector schema, HNSW index retained.
+- **Cost monitor updated:** Added `deepseek-chat` to `MODEL_PRICING` ($0.27/$1.10/M tokens, cached $0.07/M). Removed Gemini flash/pro entries.
+- **Prompt cache deleted:** Removed `app/services/chat/prompt_cache_service.py`, `app/db/models/chat/prompt_cache_handle.py`. Alembic migration `a1d6e2c84f31_drop_prompt_cache_handles.py` drops `prompt_cache_handles` table.
+- **Callers updated:** `app/routers/chat/messages.py`, `_stream_generator.py`, `app/services/chat/kb_sync.py`, `app/jobs/cleanup_semantic_cache.py` stripped of prompt-cache references.
+- **Config changes:**
+  - Added: `DEEPSEEK_API_KEY`, `DEEPSEEK_BASE_URL=https://api.deepseek.com`, `DEEPSEEK_CHAT_MODEL=deepseek-chat`
+  - Removed: `GEMINI_FLASH_MODEL`, `GEMINI_PRO_MODEL`, `PROMPT_CACHE_HIT_THRESHOLD`, `PROMPT_CACHE_TTL_SECONDS`
+  - Kept: `GEMINI_API_KEY`, `EMBEDDING_MODEL` (embeddings)
+- **Tests:** `test_llm_service.py` new (10 cases pass). Deleted `test_prompt_cache_service.py`. `test_cleanup_semantic_cache.py` reshaped (only `semantic_cache` in return dict). Prompt-cache assertions stripped.
+
+### Documentation
+- **system-architecture.md:** Updated LLM service description, removed Phase 2f prompt-cache section, updated pipeline (8 steps → 6 steps).
+- **deployment-guide.md:** Added DeepSeek env-var block, removed Gemini flash/pro lines, simplified "Enable APIs" section.
+- **chatbot-cost-monitoring.md:** Updated pricing table (DeepSeek rates), removed cached_tokens formula term, updated budget math.
+- **chatbot-runbook.md:** Updated "DeepSeek API down" incident (CN region firewall note).
+- **development-roadmap.md:** Marked Phase 06 as superseded; removed prompt-cache references.
+- **codebase-summary.md:** Removed `prompt_cache_service.py` from inventory; updated Phase 06 highlights.
+
+### Data Migration
+- **Alembic:** Migration `a1d6e2c84f31` (post-06-01) drops `prompt_cache_handles` table (no data loss; cache was ephemeral).
+- **Backward compatibility:** Semantic cache, quota, and rate-limit services unchanged. Existing conversations readable; no schema breaks.
+- **Firewall:** DeepSeek egress via `api.deepseek.com` (CN region). Verify firewall rules before prod cutover.
+
+### Breaking Changes
+- None for end-users or API contracts. Internal only: prompt-cache invalidation no longer needed; LLM request latency may differ.
+
+---
+
 ## [2026-05-28] — Chatbot Hardening + Launch Readiness Phase 08 (Unreleased)
 
 **Scope:** Production hardening, cost monitoring + alerts, 5-pattern abuse detection (rate spike, prompt injection, resource exhaustion, jailbreak, toxicity), Turnstile CAPTCHA gate, feature flags with rollout %, A/B test LLM variants, DSAR endpoint (user chat data wipe). 3 new ops docs, 39 new tests.

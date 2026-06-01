@@ -1,7 +1,7 @@
 """Integration tests for POST /api/chat/conversations/{id}/messages.
 
 RetrievalService and LlmService are monkeypatched so the test never touches
-pgvector or the real Gemini API.
+pgvector or the real DeepSeek API.
 """
 
 # ruff: noqa: UP017, I001
@@ -15,7 +15,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.models.chat.quota_usage import ChatQuotaUsage
 from app.schemas.chat.retrieval import RetrievedChunk
 from app.services.chat.llm_service import LlmError, LlmResponse, LlmService
-from app.services.chat.prompt_cache_service import PromptCacheResult, PromptCacheService
 from app.services.chat.rate_limit_service import RateLimitResult, RateLimitService
 from app.services.chat.retrieval_service import RetrievalService
 from app.services.chat.semantic_cache_service import CachedAnswer, SemanticCacheService
@@ -57,7 +56,7 @@ def patch_chat_services(monkeypatch):
     async def _retrieve(self, query, top_k=None, threshold=None, pdf_context_id=None):
         return [_fake_chunk(1), _fake_chunk(2, 0.8)]
 
-    async def _generate(self, system, user_content, tier="flash", cached_content=None):
+    async def _generate(self, system, user_content, tier="flash"):
         return LlmResponse(
             text="The meaning is X per [1].",
             model_used="gemini-2.0-flash",
@@ -193,7 +192,7 @@ class TestSendMessageErrors:
 
         llm_called = {"count": 0}
 
-        async def _generate(self, system, user_content, tier="flash", cached_content=None):
+        async def _generate(self, system, user_content, tier="flash"):
             llm_called["count"] += 1
             return LlmResponse(text="X", model_used="m", input_tokens=1, output_tokens=1)
 
@@ -225,7 +224,7 @@ class TestSendMessageErrors:
         async def _retrieve(self, query, top_k=None, threshold=None, pdf_context_id=None):
             return []
 
-        async def _generate(self, system, user_content, tier="flash", cached_content=None):
+        async def _generate(self, system, user_content, tier="flash"):
             raise LlmError("boom")
 
         monkeypatch.setattr(RetrievalService, "retrieve", _retrieve)
@@ -254,7 +253,7 @@ class TestSendMessageErrors:
         async def _retrieve(self, query, top_k=None, threshold=None, pdf_context_id=None):
             return []
 
-        async def _generate(self, system, user_content, tier="flash", cached_content=None):
+        async def _generate(self, system, user_content, tier="flash"):
             raise LlmError("upstream down")
 
         monkeypatch.setattr(RetrievalService, "retrieve", _retrieve)
@@ -338,7 +337,7 @@ class TestSendMessageQuota:
         async def _retrieve(self, query, top_k=None, threshold=None, pdf_context_id=None):
             return []
 
-        async def _generate(self, system, user_content, tier="flash", cached_content=None):
+        async def _generate(self, system, user_content, tier="flash"):
             raise LlmError("llm down")
 
         monkeypatch.setattr(RetrievalService, "retrieve", _retrieve)
@@ -411,7 +410,7 @@ class TestSendMessageSemanticCache:
 
         _orig_generate = LlmService.generate
 
-        async def _track_generate(self, system, user_content, tier="flash", cached_content=None):
+        async def _track_generate(self, system, user_content, tier="flash"):
             llm_called["n"] += 1
             return await _orig_generate(self, system, user_content, tier=tier)
 
@@ -508,48 +507,6 @@ class TestSendMessageSemanticCache:
 
 
 # ---------------------------------------------------------------------------
-# Prompt cache tests
-# ---------------------------------------------------------------------------
-
-
-class TestSendMessagePromptCache:
-    async def test_send_prompt_cache_handle_passed_to_llm(
-        self, client, auth_headers, monkeypatch, patch_chat_services
-    ):
-        """PromptCacheService.get_live_handle returns handle → cached_content passed to LLM."""
-        received_cached_content = {"val": None}
-
-        async def _get_live_handle(self, cache_key):
-            return PromptCacheResult(gemini_cache_id="caches/abc123", handle_id=1)
-
-        async def _generate(self, system, user_content, tier="flash", cached_content=None):
-            received_cached_content["val"] = cached_content
-            return LlmResponse(
-                text="Answer [1].", model_used="gemini-2.0-flash",
-                input_tokens=10, output_tokens=5,
-            )
-
-        monkeypatch.setattr(PromptCacheService, "get_live_handle", _get_live_handle)
-        monkeypatch.setattr(LlmService, "generate", _generate)
-
-        conv = (
-            await client.post(
-                "/api/chat/conversations",
-                json={"title": "prompt-cache"},
-                headers=auth_headers,
-            )
-        ).json()["data"]
-
-        resp = await client.post(
-            f"/api/chat/conversations/{conv['id']}/messages",
-            json={"content": "question with prompt cache"},
-            headers=auth_headers,
-        )
-        assert resp.status_code == 201
-        assert received_cached_content["val"] == "caches/abc123"
-
-
-# ---------------------------------------------------------------------------
 # M4 — no-info canary response must NOT be cached
 # ---------------------------------------------------------------------------
 
@@ -566,7 +523,7 @@ class TestSendMessageNoInfoCanary:
         async def _retrieve(self, query, top_k=None, threshold=None, pdf_context_id=None):
             return [_fake_chunk(1)]
 
-        async def _generate(self, system, user_content, tier="flash", cached_content=None):
+        async def _generate(self, system, user_content, tier="flash"):
             return LlmResponse(
                 text=NO_INFO_VI,
                 model_used="gemini-2.0-flash",

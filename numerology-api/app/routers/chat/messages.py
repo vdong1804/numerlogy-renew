@@ -7,17 +7,15 @@ Pipeline (both endpoints identical):
   3. Quota gate: full check() → 402 if can_send=False
   4. Retrieval: top-k KB/PDF chunks
   5. Semantic cache lookup → hit: skip LLM, decrement, return from_cache=True
-  6. Prompt cache: get_live_handle or maybe_create → gemini_cache_id
-  7. LLM call with optional cached_content
-  8. Post-LLM: semantic_cache.insert (fire-and-forget, own transaction)
-  9. Persist assistant message + decrement quota + commit
+  6. LLM call (DeepSeek auto-caches context server-side)
+  7. Post-LLM: semantic_cache.insert (fire-and-forget, own transaction)
+  8. Persist assistant message + decrement quota + commit
 """
 
 from __future__ import annotations
 
 import logging
 import math
-from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import StreamingResponse
@@ -39,7 +37,6 @@ from app.services.chat.citation_parser import build_citations
 from app.services.chat.conversation_service import ConversationService
 from app.services.chat.embedding_service import EmbeddingService
 from app.services.chat.llm_service import LlmError, LlmService
-from app.services.chat.prompt_cache_service import PromptCacheService
 from app.services.chat.quota_service import QuotaConflictError, QuotaDecision, QuotaService
 from app.services.chat.rate_limit_service import RateLimitService
 from app.services.chat.semantic_cache_service import SemanticCacheService
@@ -119,10 +116,6 @@ async def _persist_and_return_canonical(
         created_at=asst.created_at,
     )
     return {"data": out.model_dump(mode="json")}
-
-
-def _build_prompt_cache_svc(db: AsyncSession, llm: LlmService) -> PromptCacheService:
-    return PromptCacheService(db=db, client_provider=lambda: llm.client)
 
 
 # ---------------------------------------------------------------------------
@@ -222,34 +215,13 @@ async def send_message(
         db, conversation_id, user_msg.id, body.content, chunks, user_id=user.id,
     )
 
-    # Step 6: prompt cache
+    # Step 6: LLM call (DeepSeek auto-caches identical prompts server-side).
     llm = LlmService()
-    pc_svc = _build_prompt_cache_svc(db, llm)
-    cache_key = PromptCacheService.compute_key(
-        prompt.system, [c.chunk_id for c in chunks], tier
-    )
-    pc_result = await pc_svc.get_live_handle(cache_key)
-    gemini_cache_id: Optional[str] = None
-    if pc_result is not None:
-        gemini_cache_id = pc_result.gemini_cache_id
-    else:
-        maybe = await pc_svc.maybe_create(
-            cache_key=cache_key,
-            system=prompt.system,
-            kb_chunks=[{"content": c.content, "title": c.title or ""} for c in chunks],
-            tier=tier,
-            model=llm.model_id(tier),
-        )
-        if maybe is not None:
-            gemini_cache_id = maybe.gemini_cache_id
-
-    # Step 7: LLM call
     try:
         resp = await llm.generate(
             prompt.system,
             prompt.user_content,
             tier=tier,
-            cached_content=gemini_cache_id,
         )
     except LlmError as exc:
         logger.exception("LLM call failed for conv=%s", conversation_id)
@@ -258,9 +230,9 @@ async def send_message(
             detail="Vui lòng thử lại sau giây lát.",
         ) from exc
 
-    citations = build_citations(resp.text, chunks)  # step 6b
+    citations = build_citations(resp.text, chunks)
 
-    # Step 9: persist assistant message + quota decrement.
+    # Step 8: persist assistant message + quota decrement.
     # Commit first so a cache-insert failure cannot roll back the assistant message (M5 fix).
     asst_msg = await persist_assistant_message(
         db,
@@ -277,7 +249,7 @@ async def send_message(
         logger.warning("QuotaConflictError after send for user=%s (race, ignoring)", user.id)
     await db.commit()  # commit assistant message + quota — independent of cache insert
 
-    # Step 8: semantic cache insert in own transaction (fire-and-forget).
+    # Step 7: semantic cache insert in own transaction (fire-and-forget).
     # Skip no-info canary to prevent permanently caching stale "no info" responses (M4 fix).
     if resp.text.strip() != NO_INFO_VI:
         try:

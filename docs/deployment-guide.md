@@ -104,8 +104,8 @@ docker compose exec api alembic history
 - Partial index on `chat_addon_purchases(user_id, expires_at)` for cleanup queries
 - **Action on deploy:** Ensure `alembic upgrade head` runs before restarting API service
 
-**Migration 0013 (Phase 06 — Semantic Cache + Prompt Cache + Rate Limit):**
-- Introduces 3 new tables: `semantic_cache_entries`, `rate_limit_buckets`, `prompt_cache_handles`
+**Migration 0013 (Phase 06 — Semantic Cache + Rate Limit):**
+- Introduces 2 new tables: `semantic_cache_entries`, `rate_limit_buckets`
 - Creates HNSW cosine index on `semantic_cache_entries.embedding` (requires **pgvector ≥0.5.0**)
 - **CRITICAL:** Ensure `pgvector >= 0.5.0` installed before running migration. Verify:
   ```bash
@@ -114,7 +114,13 @@ docker compose exec api alembic history
   # Expected: 0.5.0 or later
   ```
 - **Action on deploy:** Ensure `alembic upgrade head` runs before restarting API service
-- **Background job:** `cleanup_semantic_cache` scheduler entry added (nightly 03:15 UTC) — deletes expired semantic cache + prompt cache entries. No manual config required.
+- **Background job:** `cleanup_semantic_cache` scheduler entry added (nightly 03:15 UTC) — deletes expired semantic cache entries. No manual config required.
+
+**Migration a1d6e2c84f31 (DeepSeek LLM Migration, 2026-06-01):**
+- Drops `prompt_cache_handles` table (ephemeral cache, no data loss)
+- Removes Gemini flash/pro model support; all chat LLM now routes to DeepSeek (`deepseek-chat`)
+- Embeddings unchanged (Gemini `text-embedding-004` retained)
+- **Action on deploy:** Ensure `alembic upgrade head` runs. No config migration needed (see `.env.example` for new DeepSeek vars).
 
 ---
 
@@ -282,19 +288,23 @@ location ~ ^/api/chat/conversations/\d+/messages/stream$ {
 In Google Cloud Console (https://console.cloud.google.com):
 1. Project: Select project matching API key
 2. APIs & Services → Enable APIs → Search + enable:
-   - `Generative Language API` (for `text-embedding-004` model)
-3. If using text generation later, also enable:
-   - `Google AI API` (for future Gemini 2.0 Flash / Pro models)
+   - `Generative Language API` (for `text-embedding-004` embedding model)
 
 **3. Add to Environment**
 
 ```bash
 # .env (local dev) or .env.prod (production)
+# Embeddings (Gemini)
 GEMINI_API_KEY=AIzaXxX...
 EMBEDDING_MODEL=text-embedding-004          # Fixed model (required)
-GEMINI_FLASH_MODEL=gemini-2.0-flash         # Future chat generation
-GEMINI_PRO_MODEL=gemini-2.0-pro             # Future advanced queries
 EMBEDDING_BATCH_SIZE=100                    # Texts per API call (default 100, max ~200)
+
+# Chat LLM (DeepSeek)
+DEEPSEEK_API_KEY=sk_...
+DEEPSEEK_BASE_URL=https://api.deepseek.com
+DEEPSEEK_CHAT_MODEL=deepseek-chat
+
+# Chunking
 CHUNK_MAX_TOKENS=500                        # Chunk window size (default 500)
 CHUNK_OVERLAP_TOKENS=50                     # Overlap between chunks (default 50)
 ```

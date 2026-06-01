@@ -4,8 +4,7 @@ Strategy
 --------
 - `get_override(key)` returns the current DB-stored value for ``key`` or ``None``
   when no override exists. The chat code (prompt_builder) treats ``None`` as
-  "use the in-code SYSTEM_PROMPT constant" — keeping Gemini's explicit prompt
-  cache stable for the common case.
+  "use the in-code SYSTEM_PROMPT constant".
 - `update(key, value, user_id)` upserts the row, appends an audit entry to
   ``chat_system_settings_history``, bumps the version counter and invalidates
   the in-process read cache.
@@ -16,9 +15,8 @@ Strategy
   any local write — across processes the worst case is ``cache_ttl`` of stale
   read which we accept (admin tuning is low-frequency).
 
-The service does NOT touch ``prompt_cache_handles`` directly; the caller
-(admin router) decides when to call ``PromptCacheService.invalidate_for_chunks``
-after a prompt change since broad invalidation is destructive.
+DeepSeek auto-caches identical prompts server-side, so prompt edits do not
+require explicit cache invalidation.
 """
 
 from __future__ import annotations

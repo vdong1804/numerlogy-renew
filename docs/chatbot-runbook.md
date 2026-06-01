@@ -34,13 +34,14 @@ Symptom: cost alert email or Slack ping; `chat_daily_metrics.cost_usd > $20`.
 4. If broad spike: drop `rollout_percent` to 25% to shed load; investigate.
 5. Hard kill if needed: set `chatbot_public.enabled=FALSE`.
 
-### 2. Gemini API down
+### 2. DeepSeek API down
 
 Symptom: 502 errors in chat endpoint; LLM timeouts in logs.
 
 - Service degrades gracefully (returns `Vui lòng thử lại sau giây lát.`) — no kill needed.
 - Check Sentry for `LlmError` rate.
 - If sustained >5 min, flip `chatbot_public.enabled=FALSE` to stop the bleed.
+- DeepSeek egress: `api.deepseek.com` (CN region) — confirm firewall rules before prod cutover.
 
 ### 3. pgvector slow / retrieval timeout
 

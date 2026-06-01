@@ -1,7 +1,7 @@
 """Integration tests for POST /api/chat/conversations/{id}/messages/stream (SSE).
 
 LlmService.generate_stream and RetrievalService.retrieve are monkeypatched so
-the test never touches pgvector or the real Gemini API.
+the test never touches pgvector or the real DeepSeek API.
 
 SSE parse helper reads the raw bytes and returns a list of (event, data) tuples.
 """
@@ -19,7 +19,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.models.chat.quota_usage import ChatQuotaUsage
 from app.schemas.chat.retrieval import RetrievedChunk
 from app.services.chat.llm_service import LlmError, LlmService
-from app.services.chat.prompt_cache_service import PromptCacheResult, PromptCacheService
 from app.services.chat.quota_service import QuotaConflictError, QuotaService
 from app.services.chat.rate_limit_service import RateLimitResult, RateLimitService
 from app.services.chat.retrieval_service import RetrievalService
@@ -93,7 +92,7 @@ def patch_stream_services(monkeypatch):
     async def _retrieve(self, query, top_k=None, threshold=None, pdf_context_id=None):
         return [_fake_chunk(1), _fake_chunk(2, score=0.8)]
 
-    async def _generate_stream(self, system, user_content, tier="flash", result=None, cached_content=None):  # noqa: E501
+    async def _generate_stream(self, system, user_content, tier="flash", result=None):
         tokens = ["Ý nghĩa ", "số 7 ", "là X [1]."]
         for tok in tokens:
             if result is not None:
@@ -274,7 +273,7 @@ class TestStreamEndpointHappyPath:
         async def _retrieve(self, query, top_k=None, threshold=None, pdf_context_id=None):
             return []
 
-        async def _stream(self, system, user_content, tier="flash", result=None, cached_content=None):  # noqa: E501
+        async def _stream(self, system, user_content, tier="flash", result=None):
             if result is not None:
                 result.model_used = "gemini-2.0-flash"
             yield "Số đường đời là "
@@ -315,7 +314,7 @@ class TestStreamRetrievalFailure:
 
         llm_called = {"n": 0}
 
-        async def _stream(self, system, user_content, tier="flash", result=None, cached_content=None):  # noqa: E501
+        async def _stream(self, system, user_content, tier="flash", result=None):
             llm_called["n"] += 1
             yield "should not appear"
 
@@ -358,7 +357,7 @@ class TestStreamLlmError:
         async def _retrieve(self, query, top_k=None, threshold=None, pdf_context_id=None):
             return [_fake_chunk(1)]
 
-        async def _stream(self, system, user_content, tier="flash", result=None, cached_content=None):  # noqa: E501
+        async def _stream(self, system, user_content, tier="flash", result=None):
             yield "partial token"
             raise LlmError("upstream died mid-stream")
 
@@ -392,7 +391,7 @@ class TestStreamLlmError:
         async def _retrieve(self, query, top_k=None, threshold=None, pdf_context_id=None):
             return [_fake_chunk(1)]
 
-        async def _stream(self, system, user_content, tier="flash", result=None, cached_content=None):  # noqa: E501
+        async def _stream(self, system, user_content, tier="flash", result=None):
             raise LlmError("instant failure")
             yield  # make it an async generator
 
@@ -465,7 +464,7 @@ class TestStreamQuota:
         async def _retrieve(self, query, top_k=None, threshold=None, pdf_context_id=None):
             return [_fake_chunk(1)]
 
-        async def _stream(self, system, user_content, tier="flash", result=None, cached_content=None):  # noqa: E501
+        async def _stream(self, system, user_content, tier="flash", result=None):
             raise LlmError("instant failure")
             yield  # make async generator
 
@@ -634,7 +633,7 @@ class TestStreamSemanticCache:
         async def _increment_hit(self, cache_id):
             pass
 
-        async def _stream_spy(self, system, user_content, tier="flash", result=None, cached_content=None):  # noqa: E501
+        async def _stream_spy(self, system, user_content, tier="flash", result=None):
             llm_called["n"] += 1
             yield "should not appear"
 
@@ -670,52 +669,6 @@ class TestStreamSemanticCache:
 
         done_data = next(e[1] for e in events if e[0] == "done")
         assert done_data.get("from_cache") is True
-
-    async def test_stream_passes_cached_content_to_llm_when_handle_exists(
-        self, client, auth_headers, monkeypatch, patch_stream_services
-    ):
-        """PromptCacheService.get_live_handle returns handle → cached_content passed to generate_stream."""  # noqa: E501
-        received_cached_content = {"val": "NOT_SET"}
-
-        async def _lookup_none(self, query, tier):
-            return None  # semantic cache miss
-
-        async def _get_live_handle(self, cache_key):
-            return PromptCacheResult(gemini_cache_id="caches/stream123", handle_id=2)
-
-        async def _stream_spy(
-            self, system, user_content, tier="flash", result=None, cached_content=None
-        ):
-            received_cached_content["val"] = cached_content
-            tokens = ["Prompt-cached ", "answer [1]."]
-            for tok in tokens:
-                if result is not None:
-                    result.input_tokens = 20
-                    result.output_tokens = 8
-                    result.model_used = "gemini-2.0-flash"
-                yield tok
-
-        monkeypatch.setattr(SemanticCacheService, "lookup", _lookup_none)
-        monkeypatch.setattr(PromptCacheService, "get_live_handle", _get_live_handle)
-        monkeypatch.setattr(LlmService, "generate_stream", _stream_spy)
-
-        conv = (
-            await client.post(
-                "/api/chat/conversations",
-                json={"title": "prompt-cache-stream"},
-                headers=auth_headers,
-            )
-        ).json()["data"]
-
-        resp = await client.post(
-            f"/api/chat/conversations/{conv['id']}/messages/stream",
-            json={"content": "prompt cached question"},
-            headers=auth_headers,
-        )
-        assert resp.status_code == 200
-        events = _parse_sse(resp.content)
-        assert "done" in [e[0] for e in events]
-        assert received_cached_content["val"] == "caches/stream123"
 
     async def test_stream_cache_hit_yields_multiple_delta_events(
         self, client, auth_headers, monkeypatch, patch_stream_services
