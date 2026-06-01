@@ -45,15 +45,14 @@ services:
       context: ../numerology-api
       dockerfile: Dockerfile
     env_file: ./.env.prod
+    # NOTE: keep every continuation line at the SAME indent as `sh -c`. With a
+    # folded scalar (>), lines indented deeper are kept literal — the embedded
+    # newlines then terminate the shell command early, so gunicorn would boot
+    # with NO args (default sync WSGI worker) and break this ASGI app.
     command: >
       sh -c "alembic upgrade head &&
-             gunicorn app.main:app
-               -w 4
-               -k uvicorn.workers.UvicornWorker
-               -b 0.0.0.0:8000
-               --timeout 120
-               --access-logfile -
-               --error-logfile -"
+      gunicorn app.main:app -w 4 -k uvicorn.workers.UvicornWorker
+      -b 0.0.0.0:8000 --timeout 120 --access-logfile - --error-logfile -"
     ports:
       # Bound to localhost — the host nginx proxies to it.
       - "127.0.0.1:8000:8000"
