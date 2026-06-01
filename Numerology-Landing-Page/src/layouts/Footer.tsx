@@ -19,8 +19,6 @@ const LEGAL_LINKS = [
   { label: 'Điều khoản sử dụng', href: '/terms' },
   { label: 'Chính sách hoàn tiền', href: '/refund-policy' },
   { label: 'Liên hệ', href: '/contact' },
-  { label: 'Kiến thức', href: '#' },
-  { label: 'Chương trình Affiliate', href: '#' },
 ]
 
 const CURRENT_YEAR = new Date().getFullYear()

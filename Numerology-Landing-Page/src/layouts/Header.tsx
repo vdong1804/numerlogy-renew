@@ -24,21 +24,13 @@ const PAGES = [
     to: '#',
   },
   {
-    name: 'Giới thiệu',
-    to: '#',
-  },
-  {
     name: 'Tra cứu',
     to: '#tra-cuu',
   },
   {
-    name: 'Dịch vụ',
-    to: '#thong-tin-aladash',
-  },
-  {
-    name: 'Affiliate',
-    to: '#',
-  },
+    name: 'Liên hệ',
+    to: '/contact',
+  }
 ]
 
 function ResponsiveAppBar() {
