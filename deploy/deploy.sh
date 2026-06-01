@@ -7,8 +7,8 @@
 # Usage (on the server, from this deploy/ dir):
 #   bash deploy.sh
 #
-# Prereqs (first time): run ./init-letsencrypt.sh once to obtain TLS certs,
-# and create ./.env.prod from .env.prod.example.
+# Prereqs (first time): create ./.env.prod from .env.prod.example, and set up
+# your own host nginx + TLS in front of 127.0.0.1:3003 (frontend) / :8000 (api).
 # =============================================================================
 set -euo pipefail
 
@@ -48,7 +48,6 @@ docker image prune -f >/dev/null
 
 echo ""
 echo "==> Deploy complete!"
-echo "    Frontend : https://nhansinhquan.vn"
-echo "    API      : https://api.nhansinhquan.vn/health"
-echo "    CMS      : https://cms.nhansinhquan.vn"
+echo "    Frontend : http://127.0.0.1:3003   (proxy via your host nginx)"
+echo "    API      : http://127.0.0.1:8000/health"
 echo "    Logs     : $COMPOSE logs -f"

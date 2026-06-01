@@ -1,8 +1,9 @@
 # Secrets — never commit
 .env.prod
 
-# Let's Encrypt certs + ACME challenge state (generated on the server)
-certbot/
+# Runtime data served by the host nginx (uploads + collected static)
+media/
+static/
 
 # Backup dumps
 backups/

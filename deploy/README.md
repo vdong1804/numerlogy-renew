@@ -1,32 +1,30 @@
-# Unified Deployment — nhansinhquan.vn
+# Deployment — nhansinhquan.vn
 
-One Docker stack deploys **both** projects behind a single nginx + Let's Encrypt TLS.
+One Docker stack runs **both** apps + Postgres. TLS termination and reverse
+proxy are handled by **your own nginx on the host** (not part of this stack).
 
-| Subdomain | Service | Source |
-|-----------|---------|--------|
-| `nhansinhquan.vn`, `www.nhansinhquan.vn` | Next.js landing page | `../Numerology-Landing-Page` |
-| `api.nhansinhquan.vn` | FastAPI backend (+ `/media`, `/static`) | `../numerology-api` |
-| `cms.nhansinhquan.vn` | FastAPI admin / CMS | `../numerology-api` |
+| Subdomain | Service | Upstream | Source |
+|-----------|---------|----------|--------|
+| `nhansinhquan.vn`, `www.nhansinhquan.vn` | Next.js landing page | `127.0.0.1:3003` | `../Numerology-Landing-Page` |
+| `api.nhansinhquan.vn` | FastAPI backend (+ `/media`, `/static`) | `127.0.0.1:8000` | `../numerology-api` |
+| `cms.nhansinhquan.vn` | FastAPI admin / CMS | `127.0.0.1:8000` | `../numerology-api` |
 
-Stack: `frontend` + `api` + `db` (Postgres 16 + pgvector) + `nginx` + `certbot`.
+Stack: `frontend` + `api` + `db` (Postgres 16 + pgvector). No `nginx`/`certbot`.
 
 ## Files
 
 | File | Purpose |
 |------|---------|
-| `docker-compose.prod.yml` | The full stack (no host ports except nginx 80/443) |
-| `nginx.conf` | Reverse proxy, TLS, per-subdomain routing, media/static, SSE |
+| `docker-compose.prod.yml` | The app stack — publishes `127.0.0.1:3003` (frontend) and `127.0.0.1:8000` (api) |
 | `.env.prod.example` | Env template → copy to `.env.prod`, fill secrets |
 | `deploy.sh` | Pull → build → migrate → restart (run every deploy) |
-| `init-letsencrypt.sh` | One-time TLS cert issuance for all 4 subdomains |
 | `backup.sh` | Daily Postgres dump, 14-day rotation (cron) |
 
 ## Prerequisites
 
 - A Linux server with Docker + Docker Compose v2.
-- DNS **A records** for all four subdomains → server IP:
-  `nhansinhquan.vn`, `www`, `api`, `cms`.
-- Ports **80** and **443** open.
+- DNS **A records** for all four subdomains → server IP.
+- **nginx installed on the host** with TLS (you configure this yourself).
 
 ## First-time setup
 
@@ -36,28 +34,18 @@ cd deploy
 # 1. Fill secrets
 cp .env.prod.example .env.prod
 nano .env.prod          # POSTGRES_PASSWORD, JWT_SECRET, DEEPSEEK_API_KEY, GEMINI_API_KEY, etc.
+# Generate JWT secret:  python3 -c "import secrets; print(secrets.token_hex(64))"
 
-# Generate JWT secret:
-#   python3 -c "import secrets; print(secrets.token_hex(64))"
-
-# 2. Obtain TLS certificates (once). Test first with STAGING=1 to dodge rate limits:
-STAGING=1 bash init-letsencrypt.sh you@email.com   # dry run
-bash init-letsencrypt.sh you@email.com             # real cert
-
-# 3. Build + migrate + start everything
+# 2. Build + migrate + start the app stack
 bash deploy.sh
 
-# 4. Seed the database (first deploy only)
+# 3. Seed the database (first deploy only)
 docker compose -f docker-compose.prod.yml --env-file .env.prod run --rm api python -m scripts.seed_all
 docker compose -f docker-compose.prod.yml --env-file .env.prod run --rm api \
   python -m scripts.create_superuser --email admin@nhansinhquan.vn --password "STRONG_PASSWORD"
-```
 
-Verify:
-
-```bash
-curl https://api.nhansinhquan.vn/health        # → {"status":"ok"}
-# open https://nhansinhquan.vn in a browser
+# 4. Configure your host nginx + TLS, then verify:
+curl http://127.0.0.1:8000/health     # → {"status":"ok"}
 ```
 
 ## Subsequent deploys
@@ -69,21 +57,25 @@ cd deploy && bash deploy.sh
 Pulls latest code, rebuilds frontend + api images, runs Alembic migrations, restarts.
 
 > **Note:** `NEXT_PUBLIC_*` values are baked into the frontend bundle at build
-> time. Changing them in `.env.prod` only takes effect after `deploy.sh`
-> rebuilds the frontend image (it always does).
+> time. Changing them in `.env.prod` only takes effect after `deploy.sh` rebuilds
+> the frontend image (it always does).
+
+## Host nginx (you configure this)
+
+The containers only listen on `127.0.0.1`. Configure your own nginx + TLS on
+the host to terminate TLS and reverse-proxy to them:
+
+- Frontend → `http://127.0.0.1:3003`
+- API + CMS → `http://127.0.0.1:8000`
+- Serve `/media` and `/static` directly from the `./media` and `./static` bind-mounts.
 
 ## Backups (cron)
 
 ```bash
 crontab -e
 # Daily 02:00 dump with 14-day retention:
-0 2 * * * /full/path/to/Numerlogy/deploy/backup.sh >> /var/log/numerology-backup.log 2>&1
+0 2 * * * /full/path/to/deploy/backup.sh >> /var/log/numerology-backup.log 2>&1
 ```
-
-## TLS renewal
-
-The `certbot` service auto-renews every 12h; nginx reloads every 6h to pick up
-new certs. No manual action needed.
 
 ## Common operations
 
@@ -93,15 +85,13 @@ C="docker compose -f docker-compose.prod.yml --env-file .env.prod"
 $C logs -f                 # all logs
 $C logs -f api             # backend only
 $C ps                      # service status
-$C restart nginx           # reload after editing nginx.conf
 $C down                    # stop stack (keeps volumes/data)
 ```
 
 ## Notes
 
-- The old single-project setup at `../numerology-api/deploy/` (CMS-only,
-  `cms.nhansinhquan.vn`) is superseded by this unified stack. Use this one.
 - `db` uses `pgvector/pgvector:pg16` because Alembic migration `0010` (chatbot
   RAG KB tables) requires the `vector` extension.
-- `TRUSTED_PROXY_MODE=direct` because this nginx is the public edge. Switch to
-  `cloudflare` only if you put Cloudflare proxy in front.
+- `TRUSTED_PROXY_MODE`: keep `direct` if the host nginx connects over plain
+  `127.0.0.1` and forwards `X-Forwarded-Proto`. Switch to `cloudflare` only if
+  Cloudflare proxy sits in front.

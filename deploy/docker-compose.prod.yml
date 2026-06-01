@@ -1,14 +1,16 @@
 # =============================================================================
-# Unified production stack — deploys ALL Numerology projects on one host.
+# Production app stack — deploys ALL Numerology projects on one host.
 #
-#   frontend  Next.js landing page   → nhansinhquan.vn, www.nhansinhquan.vn
-#   api       FastAPI backend + CMS  → api.nhansinhquan.vn, cms.nhansinhquan.vn
+#   frontend  Next.js landing page   → published on 127.0.0.1:3003
+#   api       FastAPI backend + CMS  → published on 127.0.0.1:8000
 #   db        PostgreSQL 16 + pgvector
-#   nginx     single reverse proxy + TLS termination for all subdomains
-#   certbot   Let's Encrypt cert issuance + auto-renewal
+#
+# TLS termination + reverse proxy + per-subdomain routing are handled by an
+# nginx instance YOU configure directly on the host (not part of this stack).
+# Point it at the 127.0.0.1 ports above, and serve uploads/static from the
+# ./media and ./static bind-mounts.
 #
 # Usage (from this deploy/ dir on the server):
-#   bash init-letsencrypt.sh   # first time only — obtain certs
 #   bash deploy.sh             # build + migrate + (re)start everything
 # =============================================================================
 
@@ -29,10 +31,10 @@ services:
         NEXT_PUBLIC_FB_PIXEL_ID: ${NEXT_PUBLIC_FB_PIXEL_ID:-}
         NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${NEXT_PUBLIC_TURNSTILE_SITE_KEY:-}
         NEXT_PUBLIC_SENTRY_DSN: ${NEXT_PUBLIC_SENTRY_DSN:-}
-    expose:
-      - "3003"
+    ports:
+      # Bound to localhost — the host nginx proxies to it.
+      - "127.0.0.1:3003:3003"
     restart: unless-stopped
-    # No host ports — nginx is the only public entry point.
 
   # ---------------------------------------------------------------------------
   # FastAPI backend (serves api.* and cms.* subdomains). Runs Alembic
@@ -52,14 +54,16 @@ services:
                --timeout 120
                --access-logfile -
                --error-logfile -"
-    expose:
-      - "8000"
+    ports:
+      # Bound to localhost — the host nginx proxies to it.
+      - "127.0.0.1:8000:8000"
     depends_on:
       db:
         condition: service_healthy
     volumes:
-      - media_data:/code/media
-      - static_data:/code/static
+      # Host bind-mounts so the host nginx can serve /media and /static directly.
+      - ./media:/code/media
+      - ./static:/code/static
     restart: unless-stopped
 
   # ---------------------------------------------------------------------------
@@ -79,41 +83,5 @@ services:
       start_period: 30s
     restart: unless-stopped
 
-  # ---------------------------------------------------------------------------
-  # nginx — single reverse proxy for every subdomain + TLS termination.
-  # Cert files and ACME webroot are bind-mounted from ./certbot.
-  # ---------------------------------------------------------------------------
-  nginx:
-    image: nginx:1.27-alpine
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./certbot/conf:/etc/letsencrypt:ro
-      - ./certbot/www:/var/www/certbot:ro
-      - media_data:/srv/media:ro
-      - static_data:/srv/static:ro
-    depends_on:
-      - api
-      - frontend
-    restart: unless-stopped
-    # Reload nginx every 6h so renewed certs are picked up without downtime.
-    command: >
-      sh -c "while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g 'daemon off;'"
-
-  # ---------------------------------------------------------------------------
-  # certbot — renews certificates every 12h (no-op until a cert is near expiry).
-  # ---------------------------------------------------------------------------
-  certbot:
-    image: certbot/certbot:latest
-    volumes:
-      - ./certbot/conf:/etc/letsencrypt
-      - ./certbot/www:/var/www/certbot
-    entrypoint: >
-      sh -c "trap exit TERM; while :; do certbot renew --webroot -w /var/www/certbot --quiet; sleep 12h & wait $${!}; done"
-
 volumes:
   pg_data:
-  media_data:
-  static_data:
