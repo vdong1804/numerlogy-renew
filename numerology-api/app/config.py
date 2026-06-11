@@ -76,14 +76,15 @@ class Settings(BaseSettings):
     bank_code: str = ""  # vd "VCB", "MB", "ACB" — SePay bank code
     bank_name: str = ""
 
-    # Gemini — embeddings only (text-embedding-004, 768-dim)
+    # Gemini API key (AI Studio) — fallback auth for embeddings + image gen when
+    # no Vertex service account is set (see google_application_credentials below).
     gemini_api_key: str = ""
-    embedding_model: str = "text-embedding-004"
+    embedding_model: str = "text-embedding-004"  # chat RAG embeddings, 768-dim
 
-    # Report image generation — Vertex AI via service account (needs GCP billing).
+    # Google genai auth (chat embeddings + report image generation) — Vertex AI
+    # via service account, preferred over gemini_api_key (runs on GCP billing).
     # Set google_application_credentials to the service-account JSON path; project
-    # is read from the JSON if google_cloud_project is blank. Falls back to
-    # gemini_api_key (AI Studio) when no service account is configured.
+    # is read from the JSON if google_cloud_project is blank.
     google_application_credentials: str = ""
     google_cloud_project: str = ""
     google_cloud_location: str = "us-central1"

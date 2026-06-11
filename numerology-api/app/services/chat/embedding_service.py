@@ -16,6 +16,7 @@ from google import genai
 from google.genai import types as genai_types
 
 from app.config import settings
+from app.services.genai_client import build_genai_client, is_genai_configured
 
 logger = logging.getLogger(__name__)
 
@@ -51,7 +52,9 @@ class EmbeddingService:
         batch_size: Optional[int] = None,
         max_retries: int = 3,
     ) -> None:
-        self._api_key = api_key or settings.gemini_api_key
+        # Explicit api_key forces AI Studio mode (tests); otherwise the shared
+        # builder picks Vertex AI (service account) or the configured key.
+        self._api_key = api_key
         self._model = model or settings.embedding_model
         self._batch_size = batch_size or settings.embedding_batch_size
         self._max_retries = max_retries
@@ -63,9 +66,15 @@ class EmbeddingService:
     @property
     def client(self) -> genai.Client:
         if self._client is None:
-            if not self._api_key:
-                raise EmbeddingError("GEMINI_API_KEY is not configured")
-            self._client = genai.Client(api_key=self._api_key)
+            if self._api_key:
+                self._client = genai.Client(api_key=self._api_key)
+            elif is_genai_configured():
+                self._client = build_genai_client()
+            else:
+                raise EmbeddingError(
+                    "no genai auth: set google_application_credentials "
+                    "(service account) or GEMINI_API_KEY"
+                )
         return self._client
 
     # -- Public API -------------------------------------------------------

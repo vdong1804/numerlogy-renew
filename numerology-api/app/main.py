@@ -91,9 +91,10 @@ async def _lifespan(app: FastAPI):
         job_scheduler.start()
     except Exception:  # noqa: BLE001
         logger.exception("Scheduler failed to start; continuing without jobs")
-    # Wire KB auto-sync listeners — only when a Gemini key is configured,
-    # so dev/CI without the key boots cleanly.
-    kb_enabled = bool(settings.gemini_api_key)
+    # Wire KB auto-sync listeners — only when genai auth (Vertex service
+    # account or Gemini key) is configured, so dev/CI without it boots cleanly.
+    from app.services.genai_client import is_genai_configured
+    kb_enabled = is_genai_configured()
     if kb_enabled:
         try:
             from app.db.models import numerology_content as _nc
