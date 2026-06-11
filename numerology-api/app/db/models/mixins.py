@@ -3,7 +3,7 @@
 from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import BigInteger, Integer, String, Text, func
+from sqlalchemy import BigInteger, DateTime, Integer, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 
@@ -11,10 +11,12 @@ class TimestampMixin:
     """Adds created_at / updated_at columns with auto-management."""
 
     created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
         default=func.now(),
         server_default=func.now(),
     )
     updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
         default=func.now(),
         server_default=func.now(),
         onupdate=func.now(),

@@ -7,7 +7,7 @@ can render source attribution without joining back to kb_chunks at read time.
 from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import BigInteger, ForeignKey, Integer, JSON, String, Text, func
+from sqlalchemy import BigInteger, DateTime, ForeignKey, Integer, JSON, String, Text, func
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -37,6 +37,7 @@ class ChatMessage(Base):
         _JSONB_OR_JSON, nullable=False, default=list, server_default="[]"
     )
     created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
         nullable=False,
         default=func.now(),
         server_default=func.now(),
