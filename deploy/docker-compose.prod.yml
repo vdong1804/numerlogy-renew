@@ -65,6 +65,9 @@ services:
       # /app), otherwise uploads land outside the mount and nginx can't see them.
       - ./media:/app/media
       - ./static:/app/static
+      # Vertex AI service-account JSON (read-only) — referenced by
+      # GOOGLE_APPLICATION_CREDENTIALS=secrets/<file>.json in .env.prod.
+      - ./secrets:/app/secrets:ro
     restart: unless-stopped
 
   # ---------------------------------------------------------------------------
