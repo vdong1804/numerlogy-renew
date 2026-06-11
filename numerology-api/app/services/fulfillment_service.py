@@ -17,9 +17,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.config import settings
+from app.core.numerology import calculate_numerology_numbers
 from app.db.models.order import Order
 from app.db.models.product import Product, ProductItem
 from app.db.models.user_report import UserReport
+from app.services.cover_generator import get_cover_background
 from app.utils.pdf import render_pdf
 
 logger = logging.getLogger(__name__)
@@ -272,6 +274,7 @@ async def _render_report_pdf(
         "content": contents,
         "order_id": order_id,
         "user_id": user_id,
+        "cover_bg": await _resolve_cover_bg(input_payload),
         "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
     }
 
@@ -293,6 +296,24 @@ async def _render_report_pdf(
     abs_path = abs_dir / filename
     abs_path.write_bytes(pdf_bytes)
     return str(rel_dir / filename).replace(os.sep, "/")
+
+
+async def _resolve_cover_bg(input_payload: dict) -> Optional[str]:
+    """Compute Số chủ đạo from the order input → per-user cover background.
+
+    Fully guarded: any missing/invalid input → None (cover falls back to the
+    static art / gradient). Never raises — must not block fulfillment.
+    """
+    try:
+        name = input_payload.get("name") or input_payload.get("full_name") or ""
+        birth_day = "".join(c for c in str(input_payload.get("birth_day", "")) if c.isdigit())
+        if not name or not birth_day:
+            return None
+        so_chu_dao = calculate_numerology_numbers(birth_day, name)["so_chu_dao"]
+        return await get_cover_background(so_chu_dao)
+    except Exception as exc:  # noqa: BLE001 — fail-safe
+        logger.warning("cover bg resolution skipped: %s", exc)
+        return None
 
 
 async def _fetch_content_by_codes(
