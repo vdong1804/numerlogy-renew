@@ -1,0 +1,163 @@
+/* ============================================================================
+   Numerology report — shared design system ("mystical / celestial" theme)
+   Navy + gold. Loaded (inlined) by invoice*.html and reports/base_report.html.
+   WeasyPrint target: var(), @page margin boxes, page backgrounds, SVG, flexbox,
+   ::first-letter, named pages are all supported.
+   ============================================================================ */
+
+:root {
+    --navy: #002060;
+    --navy-soft: #1b3a78;
+    --gold: #c9a227;
+    --gold-soft: #e3c970;
+    --cream: #fbf8f0;
+    --vermilion: #b0392b;
+    --ink: #1d2433;
+    --muted: #6b7280;
+    --line: #d8cdb0;
+}
+
+/* ── Page geometry + running header/footer ──────────────────────────────── */
+@page {
+    size: Letter;
+    margin: 22mm 18mm 20mm;
+    background-color: #fbf8f0;  /* full-bleed cream sheet (body bg left transparent) */
+    @top-center {
+        content: "THẦN SỐ HỌC PYTAGO";
+        font-family: "Playfair Display", serif;
+        font-size: 8pt;
+        letter-spacing: 3pt;
+        color: #c9a227;
+        padding-bottom: 4mm;
+    }
+    @bottom-center {
+        content: counter(page);
+        font-family: "Playfair Display", serif;
+        font-size: 9pt;
+        color: #002060;
+        padding-top: 4mm;
+    }
+    @bottom-right {
+        content: "nhansinhquan.vn";
+        font-family: "Lora", serif;
+        font-size: 7pt;
+        color: #b0aa97;
+        padding-top: 4mm;
+    }
+}
+/* Cover = full-bleed navy, no header/footer */
+@page cover {
+    margin: 0;
+    background: radial-gradient(circle at 50% 30%, #1b3a78 0%, #002060 55%, #001640 100%);
+    @top-center { content: none; }
+    @bottom-center { content: none; }
+    @bottom-right { content: none; }
+}
+
+/* ── Base typography ────────────────────────────────────────────────────── */
+html { font-size: 62.5%; }
+body {
+    font-family: "Lora", "DejaVu Serif", serif;
+    color: var(--ink);
+    font-size: 1.5rem;
+    line-height: 1.75;
+    margin: 0;
+}
+h1, h2, h3, h4 { font-family: "Playfair Display", "DejaVu Serif", serif; color: var(--navy); line-height: 1.25; }
+h2 { font-size: 2.4rem; margin: 1.2em 0 .5em; }
+h3 { font-size: 1.9rem; margin: 1em 0 .35em; color: var(--navy-soft); }
+h4 { font-size: 1.6rem; margin: .9em 0 .3em; color: var(--vermilion); }
+p { font-size: 1.5rem; line-height: 1.8; text-align: justify; margin: 0 0 1rem; }
+ul, ol { margin: 0 0 1rem 1.6rem; padding: 0; }
+li { font-size: 1.5rem; line-height: 1.75; margin-bottom: .3rem; }
+strong { color: var(--navy); }
+.new-page { page-break-before: always; }
+.muted { color: var(--muted); font-style: italic; font-size: 1.35rem; }
+
+/* ── Cover ──────────────────────────────────────────────────────────────── */
+.cover {
+    page: cover;
+    box-sizing: border-box;
+    min-height: 100vh;
+    padding: 48mm 24mm;
+    text-align: center;
+    color: var(--cream);
+}
+.cover-frame {
+    border: 1.5pt solid var(--gold);
+    box-sizing: border-box;
+    min-height: calc(100vh - 96mm);
+    padding: 30mm 16mm;
+    /* optional art behind the frame (P3 static / P4 per-user); the navy overlay
+       keeps cream text legible over any background image. */
+    background-image: linear-gradient(rgba(0, 22, 64, .42), rgba(0, 22, 64, .60)), var(--cover-bg, none);
+    background-size: cover, cover;
+    background-position: center, center;
+}
+.cover .eyebrow { font-family: "Lora", serif; letter-spacing: 6pt; font-size: 1.2rem; color: var(--gold-soft); text-transform: uppercase; }
+.cover .brand { font-family: "Playfair Display", serif; font-weight: 800; font-size: 4.6rem; letter-spacing: 1pt; margin: 1.2rem 0 .4rem; }
+.cover .subtitle { font-size: 1.7rem; font-style: italic; color: #d9e0f0; margin-bottom: 2.4rem; }
+.cover .glyph { color: var(--gold); font-size: 2.6rem; letter-spacing: 1.2rem; margin: 1.4rem 0; }
+.cover-info { margin: 3rem auto 0; border-collapse: collapse; min-width: 64%; }
+.cover-info td { padding: 1rem 1.6rem; font-size: 1.6rem; border-bottom: .5pt solid rgba(227, 201, 112, .35); }
+.cover-info td:first-child { text-align: right; color: var(--gold-soft); letter-spacing: 1pt; font-size: 1.3rem; text-transform: uppercase; }
+.cover-info td:last-child { text-align: left; font-family: "Playfair Display", serif; font-weight: 600; text-transform: uppercase; }
+.cover .badge { display: inline-block; margin-top: 2.6rem; padding: .6rem 2.2rem; border: 1pt solid var(--gold); border-radius: 3rem; color: var(--gold-soft); letter-spacing: 2pt; font-size: 1.3rem; }
+
+/* ── Section heading (Playfair + gold accent rule) ──────────────────────── */
+.section { margin-bottom: 1.6rem; }
+.section-title { font-size: 2.8rem; text-align: center; margin: 0 0 .3em; }
+.section-title::after {
+    content: ""; display: block; width: 64pt; height: 2.5pt;
+    background: var(--gold); margin: .5rem auto 0;
+}
+.section-subtitle { text-align: center; font-style: italic; color: var(--navy-soft); font-size: 1.7rem; margin: 0 0 1.4rem; }
+
+/* ── Gold ornamental divider ────────────────────────────────────────────── */
+.divider { text-align: center; margin: 2rem 0; color: var(--gold); }
+.divider::before, .divider::after { content: ""; display: inline-block; width: 30%; height: .5pt; background: var(--gold); vertical-align: middle; margin: 0 1.2rem; }
+.divider .diamond { font-size: 1.4rem; vertical-align: middle; }
+
+/* ── Number badge (Số chủ đạo hero) ─────────────────────────────────────── */
+.number-badge {
+    width: 26mm; height: 26mm; margin: 0 auto 1.2rem;
+    border: 1.5pt solid var(--gold); border-radius: 50%;
+    background: var(--navy); color: var(--gold-soft);
+    font-family: "Playfair Display", serif; font-weight: 700; font-size: 4.2rem;
+    display: flex; align-items: center; justify-content: center;
+}
+
+/* ── Archetype illustration (Số chủ đạo hero, P3) ───────────────────────── */
+.archetype { text-align: center; margin: 1.4rem 0 .4rem; }
+.archetype img { width: 64mm; height: 64mm; object-fit: cover; border-radius: 6pt; border: 1pt solid var(--gold); }
+
+/* ── Summary stat cards (replaces flat table) ───────────────────────────── */
+.card-grid { text-align: center; margin: 1.5rem 0; }
+.stat-card {
+    display: inline-block; width: 27%; min-width: 44mm; box-sizing: border-box;
+    margin: .8rem 1%; padding: 1.4rem .8rem; vertical-align: top;
+    background: #fff; border: .75pt solid var(--line); border-top: 2.5pt solid var(--gold);
+    border-radius: 3pt; break-inside: avoid;
+}
+.stat-card .label { font-size: 1.2rem; letter-spacing: .5pt; color: var(--muted); text-transform: uppercase; }
+.stat-card .value { font-family: "Playfair Display", serif; font-weight: 700; font-size: 3.2rem; color: var(--navy); margin-top: .3rem; }
+
+/* ── Birth chart SVG ────────────────────────────────────────────────────── */
+.chart-wrap { text-align: center; margin: 1.4rem 0 2rem; }
+.chart-svg { width: 62mm; height: 62mm; }
+
+/* ── Rich content polish ────────────────────────────────────────────────── */
+blockquote, .content blockquote {
+    margin: 1.2rem 0; padding: .6rem 1.4rem; border-left: 2.5pt solid var(--gold);
+    background: rgba(201, 162, 39, .07); font-style: italic; color: var(--navy-soft);
+}
+.content table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+.content td, .content th { border: .5pt solid var(--line); padding: .8rem 1.1rem; font-size: 1.4rem; }
+
+/* ── Free-report CTA ────────────────────────────────────────────────────── */
+.cta { text-align: center; padding-top: 8rem; }
+.cta .box { max-width: 78%; margin: 2.4rem auto 0; padding: 2.6rem; border: 1pt dashed var(--gold); border-radius: 4pt; background: #fff; }
+.cta .box p { text-align: center; }
+
+/* ── Footer note ────────────────────────────────────────────────────────── */
+.footnote { margin-top: 2.6rem; text-align: center; }

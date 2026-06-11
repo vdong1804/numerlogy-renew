@@ -1,429 +1,77 @@
-<html>
+<!DOCTYPE html>
+<html lang="vi">
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto+Serif" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Roboto+Serif:ital,wght@0,400;0,500;0,600;0,700;1,500&display=swap" rel="stylesheet" />
     <style type="text/css">
-        :root { --default-color: #002060; }
-        html { font-size: 62.5%; box-sizing: border-box; }
-        @page { @top-left { color: red; } }
-        body { font-family: "Roboto Serif", serif; color: #002060; font-size: 2rem; font-weight: 400; }
-        h1, h2, h3, h4 { line-height: 1.4; }
-        h1 { font-size: 2.8rem; } h2 { font-size: 2.4rem; } h3 { font-size: 2rem; } h4 { font-size: 1.8rem; } h5 { font-size: 1.8rem; }
-        a { text-decoration: none; color: inherit; }
-        p { font-size: 2rem; line-height: 2.8rem; text-align: justify; }
-        li { list-style-type: none; } ol li { list-style-type: decimal; }
-        img { max-width: 100%; height: auto; }
-        table, td, th { border: 1px solid; text-align: center; }
-        table { width: 100%; border-collapse: collapse; }
-        .table-content td { padding: 1rem; }
-        .table-info td { font-size: 2.6rem; }
-        .table-search td { border: none; border-bottom: 1px solid; font-size: 2.4rem; }
-        table.table-search { border: none; }
-        .table-search td:first-child { text-align: left; }
-        .new-page { page-break-before: always; }
-        .text-birth span { line-height: 1.6 }
-        .page-banner-area {
-            width: 100%;
-            background-image: url("file://{{ base_dir }}/staticfiles/images/report/page_layout.png") !important;
-            background-size: 100% 100%;
-            background-repeat: no-repeat;
-            height: 100%;
-            page-break-before: always;
-        }
-        .content { max-width: 890px; padding-left: 70px; padding-right: 70px; padding-top: 100px; }
-        .color-white { color: #fff; } .color-black { color: #525659; }
-        .name { position: absolute; font-size: 15px; padding-top: 60px; text-transform: uppercase; font-weight: 600; opacity: 0.7; width: 100%; text-align: center; }
-        .relative { position: relative; }
-        .main_number { position: absolute; left: 49%; top: 21%; color: white; font-weight: bold; }
-        .development_number { position: absolute; left: 74%; top: 28.5%; color: white; font-weight: bold; }
-        .mission_number { position: absolute; left: 74%; top: 42.5%; color: white; font-weight: bold; }
-        .part { position: absolute; left: 49.5%; top: 52%; color: white; font-weight: bold; }
-        .execution_number { position: absolute; left: 23.5%; top: 42.5%; color: white; font-weight: bold; }
-        .souls_number { position: absolute; left: 23.5%; top: 28.5%; color: white; font-weight: bold; }
-        .tuoi_dinh_cao_1 { position: absolute; left: 34%; top: 59.3%; color: white; font-weight: bold; }
-        .tuoi_dinh_cao_2 { position: absolute; left: 50%; top: 59.3%; color: white; font-weight: bold; }
-        .tuoi_dinh_cao_3 { position: absolute; left: 67%; top: 59.3%; color: white; font-weight: bold; }
-        .tuoi_dinh_cao_4 { position: absolute; left: 82%; top: 59.3%; color: white; font-weight: bold; }
-        .dinh_cao_1 { position: absolute; left: 34%; top: 62.3%; color: white; font-weight: bold; }
-        .dinh_cao_2 { position: absolute; left: 50%; top: 62.3%; color: white; font-weight: bold; }
-        .dinh_cao_3 { position: absolute; left: 67%; top: 62.3%; color: white; font-weight: bold; }
-        .dinh_cao_4 { position: absolute; left: 82%; top: 62.3%; color: white; font-weight: bold; }
-        .thu_thach_1 { position: absolute; left: 34%; top: 65.3%; color: white; font-weight: bold; }
-        .thu_thach_2 { position: absolute; left: 50%; top: 65.3%; color: white; font-weight: bold; }
-        .thu_thach_3 { position: absolute; left: 67%; top: 65.3%; color: white; font-weight: bold; }
-        .thu_thach_4 { position: absolute; left: 82%; top: 65.3%; color: white; font-weight: bold; }
-        .so_ngay_sinh { position: absolute; left: 23%; top: 80%; color: white; font-weight: bold; }
-        .so_thai_do { position: absolute; left: 49%; top: 80%; color: white; font-weight: bold; }
-        .so_nhan_cach { position: absolute; left: 75.5%; top: 80%; color: white; font-weight: bold; }
-        .so_noi_cam { position: absolute; left: 23%; top: 86.3%; color: white; font-weight: bold; }
-        .so_can_bang { position: absolute; left: 49%; top: 86.3%; color: white; font-weight: bold; }
-        .so_thieu { position: absolute; left: 68.5%; top: 86.3%; color: white; font-weight: bold; width: 139px; text-align: center; }
+        {% include "reports/_fonts.css" %}
+        {% include "reports/_theme.css" %}
     </style>
 </head>
 <body>
-    <div class="">
-        <img src="file://{{ base_dir }}/staticfiles/images/number/font.jpg">
-    </div>
-    <div class="relative">
-        <div class="name color-black">Họ và tên: {{ name }}. Ngày sinh: {{ birth_day_text }}</div>
-        <span style="position: absolute;top: 265px; left: 150px;color: red">{{ name }}</span>
-        <img src="file://{{ base_dir }}/staticfiles/images/report/page_3.jpg">
-    </div>
-    <div>
-        <img src="file://{{ base_dir }}/staticfiles/images/report/page_4.jpg">
-    </div>
-    <div class="relative">
-        <span style="position: absolute;top: 208px;left: 60px;font-size: 18px;color: #fff;font-weight: 500;">{{ name }}</span>
-        <span style="position: absolute;top: 241px;left: 60px;font-size: 18px;color: #fff;font-weight: 500;">{{ birth_day_text }}</span>
-        <span class="main_number">{{ so_chu_dao }}</span>
-        <span class="development_number">{{ so_truong_thanh }}</span>
-        <span class="mission_number">{{ so_su_menh }}</span>
-        <span class="part">{{ stages }}</span>
-        <span class="execution_number">{{ so_thuc_thi }}</span>
-        <span class="souls_number">{{ so_linh_hon }}</span>
-        <span class="tuoi_dinh_cao_1">{{ tuoi_dinh_cao_1 }}</span>
-        <span class="tuoi_dinh_cao_2">{{ tuoi_dinh_cao_2 }}</span>
-        <span class="tuoi_dinh_cao_3">{{ tuoi_dinh_cao_3 }}</span>
-        <span class="tuoi_dinh_cao_4">{{ tuoi_dinh_cao_4 }}</span>
-        <span class="dinh_cao_1">{{ dinh_cao_1 }}</span>
-        <span class="dinh_cao_2">{{ dinh_cao_2 }}</span>
-        <span class="dinh_cao_3">{{ dinh_cao_3 }}</span>
-        <span class="dinh_cao_4">{{ dinh_cao_4 }}</span>
-        <span class="thu_thach_1">{{ thu_thach_1 }}</span>
-        <span class="thu_thach_2">{{ thu_thach_2 }}</span>
-        <span class="thu_thach_3">{{ thu_thach_3 }}</span>
-        <span class="thu_thach_4">{{ thu_thach_4 }}</span>
-        <span class="so_ngay_sinh">{{ so_ngay_sinh }}</span>
-        <span class="so_thai_do">{{ so_thai_do }}</span>
-        <span class="so_nhan_cach">{{ so_nhan_cach }}</span>
-        <span class="so_noi_cam">{{ so_noi_cam }}</span>
-        <span class="so_can_bang">{{ so_can_bang }}</span>
-        <span class="so_thieu">{{ so_thieu }}</span>
-        <img src="file://{{ base_dir }}/staticfiles/images/report/page_8.jpg">
-    </div>
-    <div>
-        <img src="file://{{ base_dir }}/staticfiles/images/report/page_6.jpg">
-    </div>
-    <div>
-        <div class="name color-white">Họ và tên: {{ name }}. Ngày sinh: {{ birth_day_text }}</div>
-        <img src="file://{{ base_dir }}/staticfiles/images/report/page_9.jpg">
-    </div>
-    <div class="relative">
-        <span style="position:absolute;top:188px;font-size:18px;color:#fff;width:45px;text-align:center;font-weight:500;left:226px;">{{ l }}</span>
-        <span style="position:absolute;top:663px;right:286px;font-size:18px;color:#fff;width:59px;text-align:center;font-weight:500;">{{ r }}</span>
-        <span style="position:absolute;top:216px;right:219px;font-size:25px;color:#fff;width:59px;text-align:center;font-weight:500;">{{ v }}%</span>
-        <span style="position:absolute;top:216px;right:109px;font-size:25px;color:#fff;width:59px;text-align:center;font-weight:500;">{{ k }}%</span>
-        <span style="position:absolute;top:303px;right:158px;font-size:25px;color:#fff;width:59px;text-align:center;font-weight:500;">{{ a }}%</span>
-        <span style="position:absolute;top:367px;left:57px;font-size:21px;color:#fff;width:59px;text-align:center;font-weight:500;">{{ r1_1 }}</span>
-        <span style="position:absolute;top:443px;left:57px;font-size:21px;color:#fff;width:59px;text-align:center;font-weight:500;">{{ r1_2 }}</span>
-        <span style="position:absolute;top:367px;left:152px;font-size:21px;color:#fff;width:59px;text-align:center;font-weight:500;">{{ r2_1 }}</span>
-        <span style="position:absolute;top:443px;left:152px;font-size:21px;color:#fff;width:59px;text-align:center;font-weight:500;">{{ r2_2 }}</span>
-        <span style="position:absolute;top:367px;left:245px;font-size:21px;color:#fff;width:59px;text-align:center;font-weight:500;">{{ r3_1 }}</span>
-        <span style="position:absolute;top:443px;left:245px;font-size:21px;color:#fff;width:59px;text-align:center;font-weight:500;">{{ r3_2 }}</span>
-        <span style="position:absolute;top:367px;left:340px;font-size:21px;color:#fff;width:59px;text-align:center;font-weight:500;">{{ r4_1 }}</span>
-        <span style="position:absolute;top:443px;left:340px;font-size:21px;color:#fff;width:59px;text-align:center;font-weight:500;">{{ r4_2 }}</span>
-        <span style="position:absolute;top:367px;left:435px;font-size:21px;color:#fff;width:59px;text-align:center;font-weight:500;">{{ r5_1 }}</span>
-        <span style="position:absolute;top:443px;left:435px;font-size:21px;color:#fff;width:59px;text-align:center;font-weight:500;">{{ r5_2 }}</span>
-        <span style="position:absolute;top:840px;right:440px;font-size:21px;color:#fff;width:59px;text-align:center;font-weight:500;">{{ l1_1 }}</span>
-        <span style="position:absolute;top:916px;right:440px;font-size:21px;color:#fff;width:59px;text-align:center;font-weight:500;">{{ l1_2 }}</span>
-        <span style="position:absolute;top:840px;right:346px;font-size:21px;color:#fff;width:59px;text-align:center;font-weight:500;">{{ l2_1 }}</span>
-        <span style="position:absolute;top:916px;right:346px;font-size:21px;color:#fff;width:59px;text-align:center;font-weight:500;">{{ l2_2 }}</span>
-        <span style="position:absolute;top:840px;right:252px;font-size:21px;color:#fff;width:59px;text-align:center;font-weight:500;">{{ l3_1 }}</span>
-        <span style="position:absolute;top:916px;right:252px;font-size:21px;color:#fff;width:59px;text-align:center;font-weight:500;">{{ l3_2 }}</span>
-        <span style="position:absolute;top:840px;right:154px;font-size:21px;color:#fff;width:59px;text-align:center;font-weight:500;">{{ l4_1 }}</span>
-        <span style="position:absolute;top:916px;right:154px;font-size:21px;color:#fff;width:59px;text-align:center;font-weight:500;">{{ l4_2 }}</span>
-        <span style="position:absolute;top:840px;right:59px;font-size:21px;color:#fff;width:59px;text-align:center;font-weight:500;">{{ l5_1 }}</span>
-        <span style="position:absolute;top:916px;right:59px;font-size:21px;color:#fff;width:59px;text-align:center;font-weight:500;">{{ l5_2 }}</span>
-        <span style="position:absolute;top:1036px;right:256px;font-size:25px;color:#fff;width:59px;text-align:center;font-weight:500;">{{ eq }}</span>
-        <span style="position:absolute;top:1037px;right:60px;font-size:25px;color:#fff;width:59px;text-align:center;font-weight:500;">{{ iq }}</span>
-        <span style="position:absolute;top:1149px;right:256px;font-size:25px;color:#fff;width:59px;text-align:center;font-weight:500;">{{ aq }}</span>
-        <span style="position:absolute;top:1149px;right:60px;font-size:25px;color:#fff;width:59px;text-align:center;font-weight:500;">{{ cq }}</span>
-        <span style="position:absolute;top:861px;left:295px;font-size:21px;color:#fff;width:59px;text-align:center;font-weight:500;">{{ type_iq_2 }}</span>
-        <span style="position:absolute;top:901px;left:295px;font-size:21px;color:#fff;width:59px;text-align:center;font-weight:500;">{{ type_iq_2 }}</span>
-        <span style="position:absolute;top:942px;left:295px;font-size:21px;color:#fff;width:59px;text-align:center;font-weight:500;">{{ type_iq_3 }}</span>
-        <span style="position:absolute;top:982px;left:295px;font-size:21px;color:#fff;width:59px;text-align:center;font-weight:500;">{{ type_iq_5 }}</span>
-        <span style="position:absolute;top:1022px;left:295px;font-size:21px;color:#fff;width:59px;text-align:center;font-weight:500;">{{ type_iq_1 }}</span>
-        <span style="position:absolute;top:1062px;left:295px;font-size:21px;color:#fff;width:59px;text-align:center;font-weight:500;">{{ type_iq_8 }}</span>
-        <span style="position:absolute;top:1102px;left:295px;font-size:21px;color:#fff;width:59px;text-align:center;font-weight:500;">{{ type_iq_6 }}</span>
-        <span style="position:absolute;top:1142px;left:295px;font-size:21px;color:#fff;width:59px;text-align:center;font-weight:500;">{{ type_iq_7 }}</span>
-        <span style="position:absolute;top:1182px;left:295px;font-size:21px;color:#fff;width:59px;text-align:center;font-weight:500;">{{ type_iq_4 }}</span>
-        <img src="file://{{ base_dir }}/staticfiles/images/report/page_10.jpg">
-    </div>
+{% import "reports/_macros.html" as m %}
 
-    {# Số chủ đạo #}
-    <div class="page-banner-area">
-        <div class="name color-black">Họ và tên: {{ name }}. Ngày sinh: {{ birth_day_text }}</div>
-        <div class="content">{{ main_number_data.content | safe }}</div>
+{# ── Cover ───────────────────────────────────────────────────────────── #}
+<section class="cover">
+    <div class="cover-frame"{% if report.cover_bg %} style="--cover-bg:url('{{ report.cover_bg }}')"{% endif %}>
+        <div class="eyebrow">Khám phá bản thân qua những con số</div>
+        <div class="brand">THẦN SỐ HỌC<br/>PYTAGO</div>
+        <div class="subtitle">Bản phân tích cá nhân chuyên sâu</div>
+        <div class="glyph">&#9670; &#9670; &#9670;</div>
+        <table class="cover-info">
+            <tr><td>Họ và tên</td><td>{{ report.header.name }}</td></tr>
+            <tr><td>Ngày sinh</td><td>{{ report.header.birth_day_text }}</td></tr>
+            {% if report.header.phone %}<tr><td>Điện thoại</td><td>{{ report.header.phone }}</td></tr>{% endif %}
+        </table>
     </div>
-    <div class="page-banner-area">
-        <div class="name color-black">Họ và tên: {{ name }}. Ngày sinh: {{ birth_day_text }}</div>
-        <div class="content">{% if main_number_data.content_2 %}{{ main_number_data.content_2 | safe }}{% endif %}</div>
-    </div>
-    <div class="page-banner-area">
-        <div class="name color-black">Họ và tên: {{ name }}. Ngày sinh: {{ birth_day_text }}</div>
-        <div class="content">{% if main_number_data.content_3 %}{{ main_number_data.content_3 | safe }}{% endif %}</div>
-    </div>
-    <div class="page-banner-area">
-        <div class="name color-black">Họ và tên: {{ name }}. Ngày sinh: {{ birth_day_text }}</div>
-        <div class="content">{% if main_number_data.content_4 %}{{ main_number_data.content_4 | safe }}{% endif %}</div>
-    </div>
-    <div class="page-banner-area">
-        <div class="name color-black">Họ và tên: {{ name }}. Ngày sinh: {{ birth_day_text }}</div>
-        <div class="content">{% if main_number_data.content_5 %}{{ main_number_data.content_5 | safe }}{% endif %}</div>
-    </div>
+</section>
 
-    {# Số sứ mệnh #}
-    <div class="new-page page-banner-area">
-        <div class="name color-black">Họ và tên: {{ name }}. Ngày sinh: {{ birth_day_text }}</div>
-        <div class="content">{{ mission_number.content | safe }}</div>
-    </div>
-
-    {# Số linh hồn #}
-    <div class="new-page page-banner-area">
-        <div class="name color-black">Họ và tên: {{ name }}. Ngày sinh: {{ birth_day_text }}</div>
-        <div class="content">{{ souls_number.content | safe }}</div>
-    </div>
-
-    {# Số thực thi #}
-    <div class="new-page page-banner-area">
-        <div class="name color-black">Họ và tên: {{ name }}. Ngày sinh: {{ birth_day_text }}</div>
-        <div class="content">{{ execution_number.content | safe }}</div>
-    </div>
-
-    <div class="new-page page-banner-area">
-        <div class="name color-black">Họ và tên: {{ name }}. Ngày sinh: {{ birth_day_text }}</div>
-        <div class="content">{{ development_number.content | safe }}</div>
-    </div>
-
-    {# Biểu đồ ngày sinh + tên #}
-    <div class="relative">
-        <div class="name color-black">Họ và tên: {{ name }}. Ngày sinh: {{ birth_day_text }}</div>
-        <span style="position:absolute;top:350px;left:84px;font-size:22px;text-align:center;width:97px;color:#fff;font-weight:500;">{{ char_birth_day_3 }}</span>
-        <span style="position:absolute;top:350px;left:206px;font-size:22px;text-align:center;width:97px;color:#fff;font-weight:500;">{{ char_birth_day_6 }}</span>
-        <span style="position:absolute;top:350px;left:324px;font-size:22px;text-align:center;width:97px;color:#fff;font-weight:500;">{{ char_birth_day_9 }}</span>
-        <span style="position:absolute;top:455px;left:84px;font-size:22px;text-align:center;width:97px;color:#fff;font-weight:500;">{{ char_birth_day_2 }}</span>
-        <span style="position:absolute;top:455px;left:206px;font-size:22px;text-align:center;width:97px;color:#fff;font-weight:500;">{{ char_birth_day_5 }}</span>
-        <span style="position:absolute;top:455px;left:324px;font-size:22px;text-align:center;width:97px;color:#fff;font-weight:500;">{{ char_birth_day_8 }}</span>
-        <span style="position:absolute;top:580px;left:84px;font-size:22px;text-align:center;width:97px;color:#fff;font-weight:500;">{{ char_birth_day_1 }}</span>
-        <span style="position:absolute;top:580px;left:206px;font-size:22px;text-align:center;width:97px;color:#fff;font-weight:500;">{{ char_birth_day_4 }}</span>
-        <span style="position:absolute;top:580px;left:324px;font-size:22px;text-align:center;width:97px;color:#fff;font-weight:500;">{{ char_birth_day_7 }}</span>
-        <span style="position:absolute;top:796px;left:494px;font-size:22px;color:#fff;font-weight:500;width:97px;text-align:center;">{{ char_name_3 }}</span>
-        <span style="position:absolute;top:799px;left:611px;font-size:22px;color:#fff;font-weight:500;width:97px;text-align:center;">{{ char_name_6 }}</span>
-        <span style="position:absolute;top:796px;left:729px;font-size:22px;color:#fff;font-weight:500;width:97px;text-align:center;">{{ char_name_9 }}</span>
-        <span style="position:absolute;top:913px;left:494px;font-size:22px;color:#fff;font-weight:500;width:97px;text-align:center;">{{ char_name_2 }}</span>
-        <span style="position:absolute;top:915px;left:611px;font-size:22px;color:#fff;font-weight:500;width:97px;text-align:center;">{{ char_name_5 }}</span>
-        <span style="position:absolute;top:913px;left:731px;font-size:22px;color:#fff;font-weight:500;width:97px;text-align:center;">{{ char_name_8 }}</span>
-        <span style="position:absolute;top:1025px;left:494px;font-size:22px;color:#fff;font-weight:500;width:97px;text-align:center;">{{ char_name_1 }}</span>
-        <span style="position:absolute;top:1025px;left:611px;font-size:22px;color:#fff;font-weight:500;width:97px;text-align:center;">{{ char_name_4 }}</span>
-        <span style="position:absolute;top:1025px;left:731px;font-size:22px;color:#fff;font-weight:500;width:97px;text-align:center;">{{ char_name_7 }}</span>
-        <img src="file://{{ base_dir }}/staticfiles/images/report/page_11.jpg">
-    </div>
-
-    <div><img src="file://{{ base_dir }}/staticfiles/images/report/page_12.jpg"></div>
-    <div><img src="file://{{ base_dir }}/staticfiles/images/report/page_13.jpg"></div>
-    <div><img src="file://{{ base_dir }}/staticfiles/images/report/page_14.jpg"></div>
-    <div><img src="file://{{ base_dir }}/staticfiles/images/report/page_15.jpg"></div>
-
-    {# Đỉnh cao + thách thức overview #}
-    <div class="relative">
-        <div class="name color-black">Họ và tên: {{ name }}. Ngày sinh: {{ birth_day_text }}</div>
-        <span style="position:absolute;top:280px;left:160px;font-size:42px;color:#fff;font-weight:500;">{{ dinh_cao_1 }}</span>
-        <span style="position:absolute;top:250px;left:330px;font-size:42px;color:#fff;font-weight:500;">{{ dinh_cao_2 }}</span>
-        <span style="position:absolute;top:200px;left:510px;font-size:42px;color:#fff;font-weight:500;">{{ dinh_cao_3 }}</span>
-        <span style="position:absolute;top:160px;left:670px;font-size:42px;color:#fff;font-weight:500;">{{ dinh_cao_4 }}</span>
-        <span style="position:absolute;top:415px;left:90px;font-size:35px;color:#fff;font-weight:500;width:160px;text-align:center;">{{ tuoi_dinh_cao_1 }}T</span>
-        <span style="position:absolute;top:380px;left:267px;font-size:30px;color:#fff;font-weight:500;width:160px;text-align:center;">{{ tuoi_dinh_cao_2 }}T</span>
-        <span style="position:absolute;top:348px;left:445px;font-size:30px;color:#fff;font-weight:500;width:160px;text-align:center;">{{ tuoi_dinh_cao_3 }}T</span>
-        <span style="position:absolute;top:308px;left:622px;font-size:30px;color:#fff;font-weight:500;width:160px;text-align:center;">{{ tuoi_dinh_cao_4 }}T</span>
-        <span style="position:absolute;top:456px;left:90px;font-size:35px;color:black;font-weight:500;width:160px;text-align:center;">{{ thu_thach_1 }}</span>
-        <span style="position:absolute;top:420px;left:267px;font-size:30px;color:black;font-weight:500;width:160px;text-align:center;">{{ thu_thach_2 }}</span>
-        <span style="position:absolute;top:384px;left:445px;font-size:30px;color:black;font-weight:500;width:160px;text-align:center;">{{ thu_thach_3 }}</span>
-        <span style="position:absolute;top:347px;left:621px;font-size:30px;color:black;font-weight:500;width:160px;text-align:center;">{{ thu_thach_4 }}</span>
-        <img src="file://{{ base_dir }}/staticfiles/images/report/page_16.jpg">
-    </div>
-
-    <div class="new-page page-banner-area">
-        <div class="name color-black">Họ và tên: {{ name }}. Ngày sinh: {{ birth_day_text }}</div>
-        <div class="content">{{ for_peak.content | safe }}</div>
-    </div>
-
-    {# Đỉnh cao 1 #}
-    <div class="relative">
-        <div class="name color-white">Họ và tên: {{ name }}. Ngày sinh: {{ birth_day_text }}</div>
-        <div class="header">
-            {# Django |add:"-8" → Jinja2 arithmetic: tuoi_dinh_cao_1 - 8 #}
-            <span style="position:absolute;top:147px;left:257px;color:red;font-size:20px;">{{ tuoi_dinh_cao_1 - 8 }}</span>
-            <span style="position:absolute;top:147px;left:362px;color:red;font-size:20px;">{{ tuoi_dinh_cao_1 }}</span>
-            <span style="position:absolute;top:147px;left:550px;color:red;font-size:20px;">{{ dinh_cao_1 }}</span>
-            <span style="position:absolute;top:147px;left:690px;color:red;font-size:20px;">{{ thu_thach_1 }}</span>
+{# ── Tổng quan ───────────────────────────────────────────────────────── #}
+<section class="new-page section">
+    <h1 class="section-title">Tổng quan các chỉ số</h1>
+    <p class="section-subtitle">Bức tranh toàn cảnh những con số định hình con người bạn</p>
+    <div class="card-grid">
+        {% for label, value in report.summary %}
+        <div class="stat-card">
+            <div class="label">{{ label }}</div>
+            <div class="value">{{ value }}</div>
         </div>
-        <span style="position:absolute;top:866px;left:275px;color:black;font-size:25px;">{{ dinh_cao_1 }}</span>
-        <span style="position:absolute;top:920px;left:124px;color:black;font-size:25px;max-width:277px;">{{ life_peak_1.content | safe }}</span>
-        <span style="position:absolute;top:866px;left:650px;color:black;font-size:25px;">{{ thu_thach_1 }}</span>
-        <span style="position:absolute;top:920px;left:503px;color:black;font-size:25px;max-width:277px;">{{ challenge_life_1.content | safe }}</span>
-        <img src="file://{{ base_dir }}/staticfiles/images/report/page_17.jpg">
+        {% endfor %}
     </div>
+</section>
 
-    {# Đỉnh cao 2 #}
-    <div class="relative">
-        <div class="name color-white">Họ và tên: {{ name }}. Ngày sinh: {{ birth_day_text }}</div>
-        <div class="header">
-            <span style="position:absolute;top:147px;left:250px;color:red;font-size:20px;">{{ tuoi_dinh_cao_2 - 8 }}</span>
-            <span style="position:absolute;top:147px;left:350px;color:red;font-size:20px;">{{ tuoi_dinh_cao_2 }}</span>
-            <span style="position:absolute;top:147px;left:545px;color:red;font-size:20px;">{{ dinh_cao_2 }}</span>
-            <span style="position:absolute;top:147px;left:690px;color:red;font-size:20px;">{{ thu_thach_2 }}</span>
-        </div>
-        <span style="position:absolute;top:866px;left:275px;color:black;font-size:25px;">{{ dinh_cao_2 }}</span>
-        <span style="position:absolute;top:920px;left:124px;color:black;font-size:25px;max-width:277px;">{{ life_peak_2.content | safe }}</span>
-        <span style="position:absolute;top:866px;left:650px;color:black;font-size:25px;">{{ thu_thach_2 }}</span>
-        <span style="position:absolute;top:920px;left:503px;color:black;font-size:25px;max-width:277px;">{{ challenge_life_2.content | safe }}</span>
-        <img src="file://{{ base_dir }}/staticfiles/images/report/page_18.jpg">
-    </div>
-
-    {# Đỉnh cao 3 #}
-    <div class="relative">
-        <div class="name color-white">Họ và tên: {{ name }}. Ngày sinh: {{ birth_day_text }}</div>
-        <div class="header">
-            <span style="position:absolute;top:147px;left:257px;color:red;font-size:20px;">{{ tuoi_dinh_cao_3 - 8 }}</span>
-            <span style="position:absolute;top:147px;left:362px;color:red;font-size:20px;">{{ tuoi_dinh_cao_3 }}</span>
-            <span style="position:absolute;top:147px;left:550px;color:red;font-size:20px;">{{ dinh_cao_3 }}</span>
-            <span style="position:absolute;top:147px;left:690px;color:red;font-size:20px;">{{ thu_thach_3 }}</span>
-        </div>
-        <span style="position:absolute;top:866px;left:275px;color:black;font-size:25px;">{{ dinh_cao_3 }}</span>
-        <span style="position:absolute;top:920px;left:124px;color:black;font-size:25px;max-width:277px;">{{ life_peak_3.content | safe }}</span>
-        <span style="position:absolute;top:866px;left:650px;color:black;font-size:25px;">{{ thu_thach_3 }}</span>
-        <span style="position:absolute;top:920px;left:503px;color:black;font-size:25px;max-width:277px;">{{ challenge_life_3.content | safe }}</span>
-        <img src="file://{{ base_dir }}/staticfiles/images/report/page_19.jpg">
-    </div>
-
-    {# Đỉnh cao 4 #}
-    <div class="relative">
-        <div class="name color-white">Họ và tên: {{ name }}. Ngày sinh: {{ birth_day_text }}</div>
-        <div class="header">
-            <span style="position:absolute;top:147px;left:257px;color:red;font-size:20px;">{{ tuoi_dinh_cao_4 - 8 }}</span>
-            <span style="position:absolute;top:147px;left:362px;color:red;font-size:20px;">{{ tuoi_dinh_cao_4 }}</span>
-            <span style="position:absolute;top:147px;left:550px;color:red;font-size:20px;">{{ dinh_cao_4 }}</span>
-            <span style="position:absolute;top:147px;left:690px;color:red;font-size:20px;">{{ thu_thach_4 }}</span>
-        </div>
-        <span style="position:absolute;top:866px;left:275px;color:black;font-size:25px;">{{ dinh_cao_4 }}</span>
-        <span style="position:absolute;top:920px;left:124px;color:black;font-size:25px;max-width:277px;">{{ life_peak_4.content | safe }}</span>
-        <span style="position:absolute;top:866px;left:650px;color:black;font-size:25px;">{{ thu_thach_4 }}</span>
-        <span style="position:absolute;top:920px;left:503px;color:black;font-size:25px;max-width:277px;">{{ challenge_life_4.content | safe }}</span>
-        <img src="file://{{ base_dir }}/staticfiles/images/report/page_20.jpg">
-    </div>
-
-    <div>
-        <div class="name color-white">Họ và tên: {{ name }}. Ngày sinh: {{ birth_day_text }}</div>
-        <img src="file://{{ base_dir }}/staticfiles/images/report/page_21.jpg">
-    </div>
-
-    {# Số đam mê #}
-    <div class="new-page page-banner-area">
-        <div class="name color-black">Họ và tên: {{ name }}. Ngày sinh: {{ birth_day_text }}</div>
-        <div class="content">{{ karmic_number.content | safe }}</div>
-    </div>
-
-    {# Số thái độ #}
-    <div class="new-page page-banner-area">
-        <div class="name color-black">Họ và tên: {{ name }}. Ngày sinh: {{ birth_day_text }}</div>
-        <div class="content">{{ attitude_number.content | safe }}</div>
-    </div>
-
-    {# Số ngày sinh #}
-    <div class="new-page page-banner-area">
-        <div class="name color-black">Họ và tên: {{ name }}. Ngày sinh: {{ birth_day_text }}</div>
-        <div class="content">{{ birth_number.content | safe }}</div>
-    </div>
-
-    {# Số cân bằng #}
-    <div class="new-page page-banner-area">
-        <div class="name color-black">Họ và tên: {{ name }}. Ngày sinh: {{ birth_day_text }}</div>
-        <div class="content">{{ balance_number.content | safe }}</div>
-    </div>
-
-    {# Số tính cách #}
-    <div class="new-page page-banner-area">
-        <div class="name color-black">Họ và tên: {{ name }}. Ngày sinh: {{ birth_day_text }}</div>
-        <div class="content">{{ mature_number.content | safe }}</div>
-    </div>
-
-    {# Số thiếu — Jinja2: use miss_number list (not Django queryset with .count) #}
-    {% if miss_number %}
-    {% for row in miss_number %}
-    <div class="new-page page-banner-area">
-        <div class="name color-black">Họ và tên: {{ name }}. Ngày sinh: {{ birth_day_text }}</div>
-        <div class="content">{{ row.content | safe }}</div>
-    </div>
+{# ── Biểu đồ ngày sinh ───────────────────────────────────────────────── #}
+<section class="new-page section">
+    <h1 class="section-title">Biểu đồ ngày sinh</h1>
+    <p class="section-subtitle">{{ report.header.name }}</p>
+    {{ m.birth_chart_svg(report.chart_grid) }}
+    {% for sec in report.chart_sections %}
+    <h3>{{ sec.heading }}</h3>
+    <div class="content">{{ sec.content | safe }}</div>
     {% endfor %}
+</section>
+
+{# ── Các section diễn giải ───────────────────────────────────────────── #}
+{% for sec in report.sections %}
+<section class="new-page section">
+    <h1 class="section-title">{{ sec.heading }}</h1>
+    {% if sec.title %}<p class="section-subtitle">{{ sec.title }}</p>{% endif %}
+    {% if loop.first %}
+    <div class="number-badge">{{ sec.heading.split() | last }}</div>
+    {% if report.archetype_image %}<div class="archetype"><img src="{{ report.archetype_image }}" alt=""/></div>{% endif %}
     {% endif %}
+    {{ m.divider() }}
+    {% if sec.content %}
+    <div class="content">{{ sec.content | safe }}</div>
+    {% else %}<p class="muted">(Chưa có nội dung diễn giải.)</p>{% endif %}
+</section>
+{% endfor %}
 
-    {# Số năm cá nhân #}
-    <div class="new-page page-banner-area">
-        <div class="name color-black">Họ và tên: {{ name }}. Ngày sinh: {{ birth_day_text }}</div>
-        <div class="content">{{ personal_year_number.content | safe }}</div>
-    </div>
-
-    {# Số tháng cá nhân #}
-    <div class="new-page page-banner-area">
-        <div class="name color-black">Họ và tên: {{ name }}. Ngày sinh: {{ birth_day_text }}</div>
-        <div class="content">{{ personal_month_number.content | safe }}</div>
-    </div>
-
-    {# Số điện thoại #}
-    <div class="relative">
-        <div class="name color-white">Họ và tên: {{ name }}. Ngày sinh: {{ birth_day_text }}</div>
-        <span style="position:absolute;bottom:280px;left:76px;color:#fff;font-size:35px;text-align:center;width:72px">{{ phone_1 }}</span>
-        <span style="position:absolute;bottom:280px;left:151px;color:#fff;font-size:35px;text-align:center;width:72px">{{ phone_2 }}</span>
-        <span style="position:absolute;bottom:280px;left:227px;color:#fff;font-size:35px;text-align:center;width:72px">{{ phone_3 }}</span>
-        <span style="position:absolute;bottom:280px;left:303px;color:#fff;font-size:35px;text-align:center;width:72px">{{ phone_4 }}</span>
-        <span style="position:absolute;bottom:280px;left:379px;color:#fff;font-size:35px;text-align:center;width:72px">{{ phone_5 }}</span>
-        <span style="position:absolute;bottom:280px;left:455px;color:#fff;font-size:35px;text-align:center;width:72px">{{ phone_6 }}</span>
-        <span style="position:absolute;bottom:280px;left:531px;color:#fff;font-size:35px;text-align:center;width:72px">{{ phone_7 }}</span>
-        <span style="position:absolute;bottom:280px;left:607px;color:#fff;font-size:35px;text-align:center;width:72px">{{ phone_8 }}</span>
-        <span style="position:absolute;bottom:280px;left:683px;color:#fff;font-size:35px;text-align:center;width:72px">{{ phone_9 }}</span>
-        <span style="position:absolute;bottom:280px;left:759px;color:#fff;font-size:35px;text-align:center;width:72px">{{ phone_10 }}</span>
-        <img src="file://{{ base_dir }}/staticfiles/images/number/page_phone.jpg">
-    </div>
-
-    <div>
-        <div class="name color-white">Họ và tên: {{ name }}. Ngày sinh: {{ birth_day_text }}</div>
-        <img src="file://{{ base_dir }}/staticfiles/images/report/page_22.jpg">
-    </div>
-    <div><div class="name color-black">Họ và tên: {{ name }}. Ngày sinh: {{ birth_day_text }}</div><img src="file://{{ base_dir }}/staticfiles/images/report/page_23.jpg"></div>
-    <div><div class="name color-black">Họ và tên: {{ name }}. Ngày sinh: {{ birth_day_text }}</div><img src="file://{{ base_dir }}/staticfiles/images/report/page_24.jpg"></div>
-    <div><div class="name color-black">Họ và tên: {{ name }}. Ngày sinh: {{ birth_day_text }}</div><img src="file://{{ base_dir }}/staticfiles/images/report/page_25.jpg"></div>
-    <div><div class="name color-black">Họ và tên: {{ name }}. Ngày sinh: {{ birth_day_text }}</div><img src="file://{{ base_dir }}/staticfiles/images/report/page_26.jpg"></div>
-    <div><div class="name color-black">Họ và tên: {{ name }}. Ngày sinh: {{ birth_day_text }}</div><img src="file://{{ base_dir }}/staticfiles/images/report/page_27.jpg"></div>
-    <div><div class="name color-white">Họ và tên: {{ name }}. Ngày sinh: {{ birth_day_text }}</div><img src="file://{{ base_dir }}/staticfiles/images/report/page_28.jpg"></div>
-    <div><div class="name color-black">Họ và tên: {{ name }}. Ngày sinh: {{ birth_day_text }}</div><img src="file://{{ base_dir }}/staticfiles/images/report/page_29.jpg"></div>
-    <div><div class="name color-black">Họ và tên: {{ name }}. Ngày sinh: {{ birth_day_text }}</div><img src="file://{{ base_dir }}/staticfiles/images/report/page_30.jpg"></div>
-    <div><div class="name color-black">Họ và tên: {{ name }}. Ngày sinh: {{ birth_day_text }}</div><img src="file://{{ base_dir }}/staticfiles/images/report/page_31.jpg"></div>
-    <div><div class="name color-black">Họ và tên: {{ name }}. Ngày sinh: {{ birth_day_text }}</div><img src="file://{{ base_dir }}/staticfiles/images/report/page_32.jpg"></div>
-    <div><div class="name color-black">Họ và tên: {{ name }}. Ngày sinh: {{ birth_day_text }}</div><img src="file://{{ base_dir }}/staticfiles/images/report/page_33.jpg"></div>
-    <div><div class="name color-black">Họ và tên: {{ name }}. Ngày sinh: {{ birth_day_text }}</div><img src="file://{{ base_dir }}/staticfiles/images/report/page_34.jpg"></div>
-    <div><div class="name color-black">Họ và tên: {{ name }}. Ngày sinh: {{ birth_day_text }}</div><img src="file://{{ base_dir }}/staticfiles/images/report/page_35.jpg"></div>
-
-    <div class=""><img src="file://{{ base_dir }}/staticfiles/images/report/page_2.jpg"></div>
-    <div class=""><img src="file://{{ base_dir }}/staticfiles/images/report/d4782f0cced1408f19c0.jpg"></div>
-
-    {% if horoscopes %}
-    <div>
-        <div class="name color-white">Họ và tên: {{ name }}. Ngày sinh: {{ birth_day_text }}</div>
-        <img src="{{ horoscopes }}">
-    </div>
-    {% endif %}
-
-    <div><img src="file://{{ base_dir }}/staticfiles/images/report/page_5.jpg"></div>
-    <div class="relative">
-        <span style="position:absolute;top:215px;left:172px;color:red;">{{ name }}</span>
-        <img src="file://{{ base_dir }}/staticfiles/images/report/page_36.jpg">
-    </div>
-    <div><img src="file://{{ base_dir }}/staticfiles/images/report/page_37.jpg"></div>
-    <div><img src="file://{{ base_dir }}/staticfiles/images/report/page_38.jpg"></div>
-    <div><img src="file://{{ base_dir }}/staticfiles/images/report/page_39.jpg"></div>
+{# ── Footer note ─────────────────────────────────────────────────────── #}
+<section class="footnote">
+    {{ m.divider() }}
+    <p class="muted">Nội dung bản Thần số học Pytago này chỉ mang giá trị tham khảo,
+       phục vụ hành trình khám phá bản thân.</p>
+</section>
 
 </body>
 </html>

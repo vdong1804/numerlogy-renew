@@ -1,0 +1,32 @@
+{# ===========================================================================
+   Shared report macros. Imported by invoice*.html.
+   =========================================================================== #}
+
+{# Pythagoras birth-chart 3x3 SVG.
+   `grid` = 3 rows × 3 cells; each cell is the digit repeated by its count
+   (e.g. "33" = two 3s, "" = absent), per numerology_full_report.build_report_view.
+   Layout rows: 3-6-9 / 2-5-8 / 1-4-7. #}
+{% macro birth_chart_svg(grid) %}
+<div class="chart-wrap">
+<svg class="chart-svg" viewBox="0 0 180 180" xmlns="http://www.w3.org/2000/svg">
+    <rect x="2" y="2" width="176" height="176" rx="4" fill="#ffffff" stroke="#002060" stroke-width="2.5"/>
+    <g stroke="#c9a227" stroke-width="1">
+        <line x1="60" y1="4" x2="60" y2="176"/>
+        <line x1="120" y1="4" x2="120" y2="176"/>
+        <line x1="4" y1="60" x2="176" y2="60"/>
+        <line x1="4" y1="120" x2="176" y2="120"/>
+    </g>
+    {% for row in grid %}{% set ridx = loop.index0 %}{% for cell in row %}
+    {% if cell %}<text x="{{ loop.index0 * 60 + 30 }}" y="{{ ridx * 60 + 39 }}"
+        text-anchor="middle" font-family="Playfair Display, serif" font-weight="700"
+        font-size="{{ 24 if cell|length < 3 else (20 if cell|length < 4 else 15) }}"
+        fill="#b0392b">{{ cell }}</text>{% endif %}
+    {% endfor %}{% endfor %}
+</svg>
+</div>
+{% endmacro %}
+
+{# Gold ornamental divider. #}
+{% macro divider() %}
+<div class="divider"><span class="diamond">&#9670;</span></div>
+{% endmacro %}

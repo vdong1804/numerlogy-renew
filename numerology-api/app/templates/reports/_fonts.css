@@ -1,0 +1,20 @@
+/* Local bundled fonts (full variable TTFs from google/fonts — complete Vietnamese
+   coverage, correct cmap). Discrete font-weight values let WeasyPrint instantiate
+   the right axis position without the range-syntax warning. */
+
+/* ── Lora (body) ─────────────────────────────────────────────────────────── */
+@font-face { font-family:'Lora'; font-style:normal; font-weight:400; src:url(static/fonts/Lora.ttf) format('truetype'); }
+@font-face { font-family:'Lora'; font-style:normal; font-weight:500; src:url(static/fonts/Lora.ttf) format('truetype'); }
+@font-face { font-family:'Lora'; font-style:normal; font-weight:600; src:url(static/fonts/Lora.ttf) format('truetype'); }
+@font-face { font-family:'Lora'; font-style:normal; font-weight:700; src:url(static/fonts/Lora.ttf) format('truetype'); }
+@font-face { font-family:'Lora'; font-style:italic; font-weight:400; src:url(static/fonts/Lora-Italic.ttf) format('truetype'); }
+@font-face { font-family:'Lora'; font-style:italic; font-weight:700; src:url(static/fonts/Lora-Italic.ttf) format('truetype'); }
+
+/* ── Playfair Display (display headings) ─────────────────────────────────── */
+@font-face { font-family:'Playfair Display'; font-style:normal; font-weight:400; src:url(static/fonts/Playfair.ttf) format('truetype'); }
+@font-face { font-family:'Playfair Display'; font-style:normal; font-weight:500; src:url(static/fonts/Playfair.ttf) format('truetype'); }
+@font-face { font-family:'Playfair Display'; font-style:normal; font-weight:600; src:url(static/fonts/Playfair.ttf) format('truetype'); }
+@font-face { font-family:'Playfair Display'; font-style:normal; font-weight:700; src:url(static/fonts/Playfair.ttf) format('truetype'); }
+@font-face { font-family:'Playfair Display'; font-style:normal; font-weight:800; src:url(static/fonts/Playfair.ttf) format('truetype'); }
+@font-face { font-family:'Playfair Display'; font-style:normal; font-weight:900; src:url(static/fonts/Playfair.ttf) format('truetype'); }
+@font-face { font-family:'Playfair Display'; font-style:italic; font-weight:400; src:url(static/fonts/Playfair-Italic.ttf) format('truetype'); }

@@ -2,41 +2,44 @@
 <html lang="vi">
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <link href="https://fonts.googleapis.com/css2?family=Roboto+Serif:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <style type="text/css">
-        html { font-size: 62.5%; }
-        body { font-family: "Roboto Serif", serif; color: #002060; font-size: 1.6rem; line-height: 1.6; }
-        h1 { font-size: 3rem; margin: 1em 0 .5em; text-align: center; }
-        h2 { font-size: 2.2rem; margin: 1.4em 0 .4em; border-bottom: 2px solid #002060; padding-bottom: .2em; }
-        h3 { font-size: 1.8rem; margin: 1em 0 .3em; }
-        p, li { font-size: 1.5rem; }
-        .meta { font-size: 1.2rem; color: #555; text-align: right; margin-bottom: 1em; }
-        .input-block { background: #f4f6fb; padding: 1em 1.5em; border-radius: 6px; margin-bottom: 1em; }
-        .input-block dt { font-weight: 600; }
-        .input-block dd { margin: 0 0 .4em 1em; }
-        .new-page { page-break-before: always; }
-        .footer { margin-top: 3em; text-align: center; font-size: 1.1rem; color: #666; }
+        {% include "reports/_fonts.css" %}
+        {% include "reports/_theme.css" %}
     </style>
     {% block extra_head %}{% endblock %}
 </head>
 <body>
-    <div class="meta">Báo cáo Thần Số Học · Tạo lúc {{ generated_at }}</div>
+{% import "reports/_macros.html" as m %}
 
-    <h1>{% block title %}Báo cáo Thần Số Học{% endblock %}</h1>
-
-    {% if input %}
-    <dl class="input-block">
-        {% if input.name %}<dt>Họ và tên</dt><dd>{{ input.name }}</dd>{% endif %}
-        {% if input.birth_day %}<dt>Ngày sinh</dt><dd>{{ input.birth_day }}</dd>{% endif %}
-        {% if input.phone %}<dt>Số điện thoại</dt><dd>{{ input.phone }}</dd>{% endif %}
-        {% if input.gender %}<dt>Giới tính</dt><dd>{{ input.gender }}</dd>{% endif %}
-    </dl>
-    {% endif %}
-
-    {% block content %}{% endblock %}
-
-    <div class="footer">
-        © Nhân Sinh Quan · nhansinhquan.vn
+{# ── Cover ───────────────────────────────────────────────────────────── #}
+<section class="cover">
+    <div class="cover-frame"{% if cover_bg %} style="--cover-bg:url('{{ cover_bg }}')"{% endif %}>
+        <div class="eyebrow">Khám phá bản thân qua những con số</div>
+        <div class="brand">THẦN SỐ HỌC<br/>PYTAGO</div>
+        <div class="subtitle">{% block title %}Báo cáo Thần Số Học{% endblock %}</div>
+        <div class="glyph">&#9670; &#9670; &#9670;</div>
+        {% if input %}
+        <table class="cover-info">
+            {% if input.name %}<tr><td>Họ và tên</td><td>{{ input.name }}</td></tr>{% endif %}
+            {% if input.birth_day %}<tr><td>Ngày sinh</td><td>{{ input.birth_day }}</td></tr>{% endif %}
+            {% if input.phone %}<tr><td>Điện thoại</td><td>{{ input.phone }}</td></tr>{% endif %}
+            {% if input.gender %}<tr><td>Giới tính</td><td>{{ input.gender }}</td></tr>{% endif %}
+        </table>
+        {% endif %}
     </div>
+</section>
+
+{# ── Nội dung diễn giải ──────────────────────────────────────────────── #}
+<section class="new-page section">
+    {% block content %}{% endblock %}
+</section>
+
+{# ── Footer note ─────────────────────────────────────────────────────── #}
+<section class="footnote">
+    {{ m.divider() }}
+    <p class="muted">© Nhân Sinh Quan · nhansinhquan.vn ·
+       Nội dung chỉ mang giá trị tham khảo phục vụ khám phá bản thân.</p>
+</section>
+
 </body>
 </html>
