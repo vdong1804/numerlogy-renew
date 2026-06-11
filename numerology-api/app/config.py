@@ -80,6 +80,15 @@ class Settings(BaseSettings):
     gemini_api_key: str = ""
     embedding_model: str = "text-embedding-004"
 
+    # Report image generation — Vertex AI via service account (needs GCP billing).
+    # Set google_application_credentials to the service-account JSON path; project
+    # is read from the JSON if google_cloud_project is blank. Falls back to
+    # gemini_api_key (AI Studio) when no service account is configured.
+    google_application_credentials: str = ""
+    google_cloud_project: str = ""
+    google_cloud_location: str = "us-central1"
+    report_image_model: str = "imagen-4.0-generate-001"
+
     # DeepSeek — chat generation (OpenAI-compatible API)
     deepseek_api_key: str = ""
     deepseek_base_url: str = "https://api.deepseek.com"
