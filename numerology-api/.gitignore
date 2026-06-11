@@ -48,3 +48,6 @@ secrets/
 *service-account*.json
 *-sa.json
 gcp-*.json
+
+# DB dumps (contain data/PII) — never commit
+backups/
