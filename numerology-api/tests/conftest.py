@@ -45,6 +45,37 @@ def event_loop():
 
 
 # ---------------------------------------------------------------------------
+# Rate-limit isolation
+# ---------------------------------------------------------------------------
+#
+# The slowapi `limiter` is constructed at import time with
+# enabled=settings.rate_limit_enabled (defaults True). Test env does not set
+# RATE_LIMIT_ENABLED=false, so without this fixture the shared in-memory counter
+# bleeds across tests — e.g. repeated POST /auth/login (limit 5/min) starts
+# returning 429, breaking unrelated auth tests. Disabling the limiter turns all
+# @limiter.limit decorators into no-ops (per rate_limit.py docstring), which is
+# the documented test-safe behaviour.
+
+
+@pytest.fixture(autouse=True)
+def _disable_rate_limit():
+    """Disable slowapi rate limiting for every test (isolation)."""
+    from app.middleware.rate_limit import limiter
+
+    previous = limiter.enabled
+    limiter.enabled = False
+    try:
+        # Clear any counters accumulated before the limiter was disabled.
+        try:
+            limiter.reset()
+        except Exception:  # noqa: BLE001 — storage backend may not support reset
+            pass
+        yield
+    finally:
+        limiter.enabled = previous
+
+
+# ---------------------------------------------------------------------------
 # Test DB engine & session factory (with in-memory SQLite)
 # ---------------------------------------------------------------------------
 
@@ -225,13 +256,19 @@ async def superuser_headers(superuser: User) -> dict[str, str]:
 
 @pytest.fixture
 async def mock_horoscope(respx_mock):
-    """Mock vietheart.net horoscope endpoint."""
-    respx_mock.post("https://www.vietheart.net/api/horoscope/get_detail").mock(
+    """Mock vietheart.net horoscope endpoint.
+
+    gen_horoscopes() POSTs to api.vietheart.net/api/v1/horoscopes/create/ and
+    returns response.json()["data"]["data"], so the mock body must nest the
+    image payload two levels deep under "data".
+    """
+    respx_mock.post(
+        "https://api.vietheart.net/api/v1/horoscopes/create/"
+    ).mock(
         return_value=httpx.Response(
             200,
             json={
-                "data": "<svg xmlns='http://www.w3.org/2000/svg'></svg>",
-                "status": 1,
+                "data": {"data": "<svg xmlns='http://www.w3.org/2000/svg'></svg>"},
             },
         )
     )

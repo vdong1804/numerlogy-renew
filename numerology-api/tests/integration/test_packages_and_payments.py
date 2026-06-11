@@ -23,8 +23,8 @@ class TestPackagesList:
         from app.db.models.package import Package
 
         # Create test packages
-        pkg1 = Package(name="Package 1", price=100000, download_count=5)
-        pkg2 = Package(name="Package 2", price=200000, download_count=10)
+        pkg1 = Package(name="Package 1", price=100000, number_download=5)
+        pkg2 = Package(name="Package 2", price=200000, number_download=10)
         db_session.add(pkg1)
         db_session.add(pkg2)
         await db_session.commit()
@@ -59,7 +59,7 @@ class TestPaymentsCreate:
         from app.db.models.package import Package
 
         # Create a package first
-        pkg = Package(name="Test Package", price=100000, download_count=5)
+        pkg = Package(name="Test Package", price=100000, number_download=5)
         db_session.add(pkg)
         await db_session.commit()
         await db_session.refresh(pkg)
@@ -77,8 +77,11 @@ class TestPaymentsCreate:
             headers=auth_headers,
         )
         assert response.status_code == 201
+        # PaymentOut shape: id, package, price, ..., status, created_at
+        # (user_id is forced from the token server-side and not echoed back).
         data = response.json()
-        assert data["user_id"] is not None
+        assert data["id"] is not None
+        assert data["price"] == 100000
         assert data["status"] == 1  # Pending status
 
     async def test_create_payment_requires_auth(self, client):
@@ -105,7 +108,7 @@ class TestPaymentsAdmin:
         from app.db.models.package import Package, UserPayment
 
         # Create package and payment
-        pkg = Package(name="Test", price=100000, download_count=5)
+        pkg = Package(name="Test", price=100000, number_download=5)
         db_session.add(pkg)
         await db_session.flush()
 

@@ -128,10 +128,15 @@ class TestPurchaseAddonPackage:
         assert data["package_id"] == pkg.id
         assert data["price"] == pkg.price
 
-    async def test_purchase_returns_bank_info(
+    async def test_purchase_returns_payment_summary(
         self, client, auth_headers, db_session: AsyncSession
     ):
-        """Response includes bank fields (may be empty strings in test env)."""
+        """Purchase response returns the pending-payment summary.
+
+        Bank receiver info is intentionally NOT in this response — clients fetch
+        it separately from GET /api/payments/bank (single source of truth in
+        settings.bank_* env vars). See AddonPurchaseInitiateOut.
+        """
         pkg = _make_addon_package(name="Bank Info Pack")
         db_session.add(pkg)
         await db_session.commit()
@@ -142,10 +147,13 @@ class TestPurchaseAddonPackage:
         )
         assert resp.status_code == 201
         data = resp.json()["data"]
-        assert "bank_account_number" in data
-        assert "bank_account_holder" in data
+        # New contract: payment_id, package_id, price, status (no bank fields)
         assert "payment_id" in data
         assert isinstance(data["payment_id"], int)
+        assert data["package_id"] == pkg.id
+        assert data["price"] == pkg.price
+        assert data["status"] == 1  # pending
+        assert "bank_account_number" not in data
 
     async def test_purchase_404_on_unknown_package(self, client, auth_headers):
         """Non-existent package_id → 404."""

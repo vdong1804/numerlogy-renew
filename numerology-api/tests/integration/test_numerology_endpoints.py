@@ -98,6 +98,7 @@ class TestSoHocPaid:
             params={
                 "full_name": "Nguyen Van A",
                 "birth_day": "15101990",
+                "phone": "0901234567",
             },
             headers=headers,
         )
@@ -132,6 +133,7 @@ class TestSoHocPaid:
             params={
                 "full_name": "Nguyen Van A",
                 "birth_day": "15101990",
+                "phone": "0901234567",
             },
             headers=headers,
         )
@@ -149,24 +151,38 @@ class TestLaSo:
     """GET /api/la-so endpoint (astrology chart)."""
 
     async def test_la_so_public_endpoint(self, client, mock_horoscope):
-        """GET /api/la-so returns horoscope data (public)."""
+        """GET /api/la-so returns horoscope data (public).
+
+        Endpoint now requires full_name + birth_day + birth_time. The
+        vietheart.net horoscope call is mocked, so a 200 with {"data":
+        {"horoscopes": ...}} is returned.
+        """
         response = await client.get(
             "/api/la-so",
             params={
-                "name": "Nguyen Van A",
+                "full_name": "Nguyen Van A",
                 "birth_day": "15101990",
+                # birth_time format: 5th space-token is parsed as HH:MM:SS
+                "birth_time": "a b c d 08:30:00",
             },
         )
         # Should return 200 with mocked response
         assert response.status_code == 200
+        assert "horoscopes" in response.json()["data"]
 
-    async def test_la_so_invalid_birth_day(self, client):
-        """GET /api/la-so with invalid birth_day returns 400."""
+    async def test_la_so_invalid_birth_time(self, client):
+        """GET /api/la-so with unparseable birth_time returns 400.
+
+        The la-so endpoint does NOT validate birth_day format (it is sliced and
+        forwarded to the horoscope API). The real validation is on birth_time:
+        gen_horoscopes raises HTTP 400 when the time token cannot be parsed.
+        """
         response = await client.get(
             "/api/la-so",
             params={
-                "name": "Nguyen Van A",
-                "birth_day": "invalid",
+                "full_name": "Nguyen Van A",
+                "birth_day": "15101990",
+                "birth_time": "not-a-valid-time",
             },
         )
         assert response.status_code == 400
