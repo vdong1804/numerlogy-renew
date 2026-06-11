@@ -36,7 +36,6 @@ _PHONE_NUMBER = [f"{n:02d}" for n in range(100)] + [
 CONTENT_CODES: dict[str, list[str]] = {
     "MainNumber":           _MASTER,
     "MissionNumber":        _MASTER,
-    "ExecutionNumber":      _BASIC,
     "SoulsNumber":          _MASTER,
     "DevelopmentNumber":    _BASIC,
     "LifePeak":             _BASIC + ["11", "22", "33", "1000"],
@@ -53,7 +52,8 @@ CONTENT_CODES: dict[str, list[str]] = {
     "PhoneNumber":          _PHONE_NUMBER,
     "PersonalMonthNumber":  _BASIC,
     "Identifiable":         _BASIC,
-    "BalanceNumber":        _MASTER,
     "MissNumber":           _BASIC,
     "PersonalYearNumber":   [str(n) for n in range(1, 12)],  # 1-11
+    "KarmicDebtNumber":     ["13", "14", "16", "19"],
+    "GrowthNumber":         _MASTER,
 }

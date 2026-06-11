@@ -21,10 +21,6 @@ class MissionNumber(NumerologyContentMixin, Base):
     __tablename__ = "mission_number"
 
 
-class ExecutionNumber(NumerologyContentMixin, Base):
-    __tablename__ = "execution_number"
-
-
 class SoulsNumber(NumerologyContentMixin, Base):
     __tablename__ = "souls_number"
 
@@ -90,16 +86,22 @@ class Identifiable(NumerologyContentMixin, Base):
     __tablename__ = "identifiable"
 
 
-class BalanceNumber(NumerologyContentMixin, Base):
-    __tablename__ = "balance_number"
-
-
 class MissNumber(NumerologyContentMixin, Base):
     __tablename__ = "miss_number"
 
 
 class PersonalYearNumber(NumerologyContentMixin, Base):
     __tablename__ = "personal_year_number"
+
+
+class KarmicDebtNumber(NumerologyContentMixin, Base):
+    # Số Nợ Nghiệp — codes 13/14/16/19 (Karmic Debt)
+    __tablename__ = "karmic_debt_number"
+
+
+class GrowthNumber(NumerologyContentMixin, Base):
+    # Số Phát Triển (Năng Lực Tiếp Cận) — maps to so_phat_trien
+    __tablename__ = "growth_number"
 
 
 # ---------------------------------------------------------------------------
@@ -133,7 +135,6 @@ class PhoneMasterDataModel(Base):
 __all__ = [
     "MainNumber",
     "MissionNumber",
-    "ExecutionNumber",
     "SoulsNumber",
     "DevelopmentNumber",
     "LifePeak",
@@ -150,8 +151,9 @@ __all__ = [
     "PhoneNumber",
     "PersonalMonthNumber",
     "Identifiable",
-    "BalanceNumber",
     "MissNumber",
     "PersonalYearNumber",
+    "KarmicDebtNumber",
+    "GrowthNumber",
     "PhoneMasterDataModel",
 ]

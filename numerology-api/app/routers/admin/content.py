@@ -7,11 +7,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.deps import get_db
 from app.db.models.numerology_content import (
-    MainNumber, MissionNumber, ExecutionNumber, SoulsNumber, DevelopmentNumber,
+    MainNumber, MissionNumber, SoulsNumber, DevelopmentNumber,
     LifePeak, ChallengeLife, BirthdayChart, NameChart, StagesOfLife, AttitudeNumber,
     BirthdayNumber, MatureNumber, IntrospectiveNumber, KarmicNumber, DeficitNumber,
-    PhoneNumber, PersonalMonthNumber, Identifiable, BalanceNumber, MissNumber,
-    PersonalYearNumber, PhoneMasterDataModel,
+    PhoneNumber, PersonalMonthNumber, Identifiable, MissNumber,
+    PersonalYearNumber, KarmicDebtNumber, GrowthNumber, PhoneMasterDataModel,
 )
 from app.schemas.content import (
     NumerologyContentOut, NumerologyContentCreate, NumerologyContentUpdate,
@@ -26,7 +26,6 @@ router = APIRouter(tags=["admin-content"])
 CONTENT_REGISTRY: dict = {
     "main-number": MainNumber,
     "mission-number": MissionNumber,
-    "execution-number": ExecutionNumber,
     "souls-number": SoulsNumber,
     "development-number": DevelopmentNumber,
     "life-peak": LifePeak,
@@ -43,9 +42,10 @@ CONTENT_REGISTRY: dict = {
     "phone-number": PhoneNumber,
     "personal-month-number": PersonalMonthNumber,
     "identifiable": Identifiable,
-    "balance-number": BalanceNumber,
     "miss-number": MissNumber,
     "personal-year-number": PersonalYearNumber,
+    "karmic-debt-number": KarmicDebtNumber,
+    "growth-number": GrowthNumber,
     "phone-master-data": PhoneMasterDataModel,
 }
 

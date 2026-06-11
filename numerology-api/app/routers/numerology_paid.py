@@ -12,12 +12,10 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.numerology import calculate_numerology_numbers
 from app.db.models.user import User, UserProfile
 from app.deps import get_current_user, get_db
-from app.services.horoscope_client import gen_horoscopes
-from app.services.numerology_context import build_common_context, decrement_quota, save_user_download
-from app.services.numerology_db import get_numerology_models
+from app.services.numerology_context import decrement_quota, save_user_download
+from app.services.numerology_full_report import build_report_view
 from app.utils.pdf import render_pdf
 
 logger = logging.getLogger(__name__)
@@ -88,38 +86,13 @@ async def so_hoc(
     if not profile or profile.number_download < 1:
         raise HTTPException(400, 'Bạn không đủ lượt tải')
 
-    horoscopes = None
-    if birth_time:
-        try:
-            horoscopes = await gen_horoscopes(full_name, birth_day, birth_time, sex)
-        except HTTPException:
-            horoscopes = None  # non-fatal
-
     try:
-        calc = calculate_numerology_numbers(birth_day, full_name)
+        report = await build_report_view(db, full_name, birth_day, phone)
     except ValueError as exc:
         raise HTTPException(400, str(exc))
 
-    models = await get_numerology_models(db, calc)
-    context = build_common_context(full_name, birth_day, phone, calc, models)
-    context.update({
-        'r': r, 'l': l, 'eq': eq, 'iq': iq, 'aq': aq, 'cq': cq,
-        'v': v, 'a': a, 'k': k,
-        'r1_1': r1_1, 'r1_2': r1_2, 'r2_1': r2_1, 'r2_2': r2_2,
-        'r3_1': r3_1, 'r3_2': r3_2, 'r4_1': r4_1, 'r4_2': r4_2,
-        'r5_1': r5_1, 'r5_2': r5_2,
-        'l1_1': l1_1, 'l1_2': l1_2, 'l2_1': l2_1, 'l2_2': l2_2,
-        'l3_1': l3_1, 'l3_2': l3_2, 'l4_1': l4_1, 'l4_2': l4_2,
-        'l5_1': l5_1, 'l5_2': l5_2,
-        'type_iq_1': type_iq_1, 'type_iq_2': type_iq_2,
-        'type_iq_3': type_iq_3, 'type_iq_4': type_iq_4,
-        'type_iq_5': type_iq_5, 'type_iq_6': type_iq_6,
-        'type_iq_7': type_iq_7, 'type_iq_8': type_iq_8,
-        'horoscopes': horoscopes,
-    })
-
     try:
-        pdf_bytes = await render_pdf('invoice.html', context)
+        pdf_bytes = await render_pdf('invoice.html', {'report': report})
     except RuntimeError:
         raise HTTPException(500, 'Không thể tạo file PDF, vui lòng thử lại')
 

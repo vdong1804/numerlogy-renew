@@ -1,16 +1,22 @@
 """Pure numerology calculation — zero DB, zero framework.
 
+Algorithm mirrors the authoritative Excel template (SAMPLE 00.00.2000.xls),
+sheets `NGÀY SINH`, `TÊN`, `Full`. Only numbers present in that template are
+computed; fields with no Excel counterpart (số cân bằng, số thực thi) were
+removed.
+
 Inputs:
     birth_day: str  — 8-digit ddmmyyyy e.g. "15101990"
     full_name: str  — Vietnamese full name (accented or plain)
-    current_age: int | None — override age (useful in tests)
+    current_age: int | None — override age (used only to pick the active life peak)
 
 Returns dict with all numerology numbers (see calculate_numerology_numbers).
 
-Master-number redirect rules (ported from views.py lines 121-124, 159-160, 186-187):
-  - thu_thach_* == 0  → redirect to 9  (DB has no code=0 row)
-  - so_thuc_thi == 0  → redirect to 9  (DB has no code=0 row)
-  - so_truong_thanh ∈ {11,22,33} → reduce  (DB has no master entries for this field)
+Reduction policy (matches content-table code ranges in scripts/_content_codes.py):
+  - MASTER (preserve 11/22/33, via get_sum_spec): chủ đạo, sứ mệnh, linh hồn,
+    nhân cách, phát triển.
+  - BASIC (reduce to 1-9, via get_sum): everything else.
+  - Redirect 0 → 9 for challenges / personal-year (DB has no code=0 row).
 """
 
 from __future__ import annotations
@@ -38,20 +44,22 @@ def calculate_numerology_numbers(
 
     Raises ValueError if name has no mappable alphabet characters.
     """
+    # ── Birth-date numbers (sheet NGÀY SINH) ────────────────────────────
     day_sum = get_sum_new(int(birth_day[0:2]))
     month_sum = get_sum_new(int(birth_day[2:4]))
     year_sum = get_sum_new(int(birth_day[4:8]))
     sum_birth_day = sum(int(x) for x in birth_day if x.isdigit())
 
-    so_chu_dao = get_sum_spec(day_sum + month_sum + year_sum)
+    so_chu_dao = get_sum_spec(day_sum + month_sum + year_sum)  # N3 = SUM(B3:I3) reduced
 
     sum_ngay = int(birth_day[0]) + int(birth_day[1])
     sum_thang = int(birth_day[2]) + int(birth_day[3])
-    so_ngay_sinh = get_sum(sum_ngay)
-    so_thang_sinh = get_sum(sum_thang)
-    so_nam_sinh = get_sum(sum_birth_day - sum_thang - sum_ngay)
-    so_thai_do = get_sum(so_ngay_sinh + so_thang_sinh)
+    so_ngay_sinh = get_sum(sum_ngay)                                  # N4
+    so_thang_sinh = get_sum(sum_thang)                                # N5
+    so_nam_sinh = get_sum(sum_birth_day - sum_thang - sum_ngay)       # N6
+    so_thai_do = get_sum(so_ngay_sinh + so_thang_sinh)               # N7 = N4+N5
 
+    # ── 4 life peaks: ages (C12:F12) + values (N12:N15) ─────────────────
     tuoi_dinh_cao_1 = 36 - so_chu_dao
     tuoi_dinh_cao_2 = tuoi_dinh_cao_1 + 9
     tuoi_dinh_cao_3 = tuoi_dinh_cao_2 + 9
@@ -59,11 +67,12 @@ def calculate_numerology_numbers(
 
     age = current_age if current_age is not None else (datetime.now().year - int(birth_day[4:8]))
 
-    dinh_cao_1 = get_sum(get_sum(so_ngay_sinh + so_thang_sinh))
-    dinh_cao_2 = get_sum(get_sum(so_ngay_sinh + so_nam_sinh))
-    dinh_cao_3 = get_sum(dinh_cao_1 + dinh_cao_2)
-    dinh_cao_4 = get_sum(so_thang_sinh + so_nam_sinh)
+    dinh_cao_1 = get_sum(get_sum(so_ngay_sinh + so_thang_sinh))  # N12 = N4+N5
+    dinh_cao_2 = get_sum(get_sum(so_ngay_sinh + so_nam_sinh))    # N13 = N4+N6
+    dinh_cao_3 = get_sum(dinh_cao_1 + dinh_cao_2)               # N14 = N12+N13
+    dinh_cao_4 = get_sum(so_thang_sinh + so_nam_sinh)           # N15 = N5+N6
 
+    # Active peak for the current age (selects which of the 4 peaks applies now)
     stages, tuoi_dinh_cao = 0, None
     if age > (25 - so_chu_dao) and age < tuoi_dinh_cao_1:
         stages, tuoi_dinh_cao = dinh_cao_1, tuoi_dinh_cao_1
@@ -74,37 +83,29 @@ def calculate_numerology_numbers(
     if age >= tuoi_dinh_cao_3 and age < 54 + so_chu_dao:
         stages, tuoi_dinh_cao = dinh_cao_4, tuoi_dinh_cao_4
 
-    so_nam_ca_nhan = so_thang_ca_nhan = None
-    if age > (25 - so_chu_dao) and age < 54 + so_chu_dao:
-        so_nam_ca_nhan = 9 - tuoi_dinh_cao + age
-        # Wrap negative into 1-9 cycle (views.py line 99: if < 0: += 9)
-        if so_nam_ca_nhan < 0:
-            so_nam_ca_nhan += 9
-        so_nam_ca_nhan = get_sum(so_nam_ca_nhan)
-        so_thang_ca_nhan = get_sum(so_nam_ca_nhan + datetime.now().month)
-    if age <= (25 - so_chu_dao):
-        so_nam_ca_nhan, so_thang_ca_nhan = 11, get_sum(datetime.now().month)
-    if age >= (54 + so_chu_dao):
-        so_nam_ca_nhan, so_thang_ca_nhan = 10, get_sum(datetime.now().month)
-    if so_nam_ca_nhan == 0:
-        so_nam_ca_nhan = 9
+    # ── Personal month (Excel: K10 = N8 + tháng) ────────────────────────
+    # Số năm cá nhân (= reduce(số năm thế giới + số thái độ)) is kept ONLY as
+    # an internal intermediate for số tháng cá nhân — it is no longer exposed.
+    now = datetime.now()
+    _so_nam_ca_nhan = get_sum(get_sum(now.year) + so_thai_do) or 9
+    so_thang_ca_nhan = get_sum(_so_nam_ca_nhan + now.month)
 
-    # 4 thách thức — MASTER-NUMBER REDIRECT: 0 → 9 (views.py lines 121-124)
-    thu_thach_1 = get_sum(get_sum(get_sum(abs(so_ngay_sinh - so_thang_sinh))))
-    thu_thach_2 = get_sum(get_sum(abs(so_ngay_sinh - so_nam_sinh)))
-    thu_thach_3 = get_sum(get_sum(abs(thu_thach_1 - thu_thach_2)))
-    thu_thach_4 = get_sum(get_sum(abs(so_nam_sinh - so_thang_sinh)))
+    # ── 4 challenges (N16:N19), redirect 0 → 9 ──────────────────────────
+    thu_thach_1 = get_sum(get_sum(get_sum(abs(so_ngay_sinh - so_thang_sinh))))  # K16 = |N4-N5|
+    thu_thach_2 = get_sum(get_sum(abs(so_ngay_sinh - so_nam_sinh)))             # K17 = |N4-N6|
+    thu_thach_3 = get_sum(get_sum(abs(thu_thach_1 - thu_thach_2)))             # K18 = |K16-K17|
+    thu_thach_4 = get_sum(get_sum(abs(so_nam_sinh - so_thang_sinh)))           # K19 = |N6-N5|
     if thu_thach_1 == 0: thu_thach_1 = 9
     if thu_thach_2 == 0: thu_thach_2 = 9
     if thu_thach_3 == 0: thu_thach_3 = 9
     if thu_thach_4 == 0: thu_thach_4 = 9
 
-    # Name analysis
+    # ── Name numbers (sheet TÊN) ────────────────────────────────────────
     full_name_lower = strip_accents(full_name).lower()
     name_parts = full_name_lower.split()
     if not name_parts:
         raise ValueError("full_name has no recognizable characters after accent stripping")
-    ho, ten = name_parts[0], name_parts[-1]
+    ten = name_parts[-1]  # given name = last word
 
     sum_full_name = sum_full_vowel = sum_full_consonant = 0
     arr_value: list[int] = []
@@ -122,33 +123,37 @@ def calculate_numerology_numbers(
         raise ValueError("full_name contains no mappable alphabet characters")
 
     text_name = ''.join(str(v) for v in arr_value)
-    so_can_bang = get_sum((alphabet.get(ho[0], {}).get('value', 0)) + (alphabet.get(ten[0], {}).get('value', 0)))
-    so_linh_hon = get_sum_spec(get_sum_spec(sum_full_vowel))
-    so_su_menh = get_sum_spec(get_sum_spec(sum_full_name))
+    so_linh_hon = get_sum_spec(get_sum_spec(sum_full_vowel))      # AB2 — vowels of full name
+    so_su_menh = get_sum_spec(get_sum_spec(sum_full_name))        # AB3 — all letters of full name
+    so_nhan_cach = get_sum_spec(get_sum_spec(sum_full_consonant)) # AB4 — consonants of full name
 
-    # MASTER-NUMBER REDIRECT: Thực Thi 0 → 9 (views.py lines 159-160)
-    so_thuc_thi = abs(get_sum(so_chu_dao) - get_sum(so_su_menh))
-    if so_thuc_thi == 0: so_thuc_thi = 9
-
-    so_nhan_cach = get_sum_spec(get_sum_spec(sum_full_consonant))
-
+    # Given-name (Tên riêng) numbers
     sum_name, the_nhan_dang = 0, ''
     for char in ten:
         if char in alphabet:
             info = alphabet[char]
             if info['is_vowel'] and not the_nhan_dang:
-                the_nhan_dang = info['value']
+                the_nhan_dang = info['value']  # AB9 — first vowel of given name
             sum_name += info['value']
 
-    so_phat_trien = get_sum_spec(get_sum_spec(sum_name))
+    so_phat_trien = get_sum_spec(get_sum_spec(sum_name))  # AB11 — all letters of given name
 
-    # MASTER-NUMBER REDIRECT: Trưởng Thành {11,22,33} → reduce (views.py lines 186-187)
+    # Số trưởng thành (AB14) = sứ mệnh + chủ đạo; reduce master → basic per DevelopmentNumber
     so_truong_thanh = get_sum_spec(so_su_menh + get_sum(so_chu_dao))
     if so_truong_thanh in (11, 22, 33):
         so_truong_thanh = get_sum(so_truong_thanh)
 
-    so_noi_cam = mode(arr_value)
-    leak_num = [n for n in range(1, 10) if str(n) not in text_name]
+    so_noi_cam = mode(arr_value)  # most frequent value in the name chart
+
+    # ── Số thiếu (Excel: missing in birth date + full name + 7 core numbers) ──
+    core_digits = {
+        str(get_sum(n)) for n in (
+            so_chu_dao, so_su_menh, so_linh_hon, so_nhan_cach,
+            so_ngay_sinh, so_thai_do, so_truong_thanh,
+        )
+    }
+    present = set(birth_day) | set(text_name) | core_digits
+    leak_num = [n for n in range(1, 10) if str(n) not in present]
 
     return {
         'so_chu_dao': so_chu_dao, 'so_ngay_sinh': so_ngay_sinh,
@@ -159,11 +164,11 @@ def calculate_numerology_numbers(
         'age': age, 'dinh_cao_1': dinh_cao_1, 'dinh_cao_2': dinh_cao_2,
         'dinh_cao_3': dinh_cao_3, 'dinh_cao_4': dinh_cao_4,
         'stages': stages, 'tuoi_dinh_cao': tuoi_dinh_cao,
-        'so_nam_ca_nhan': so_nam_ca_nhan, 'so_thang_ca_nhan': so_thang_ca_nhan,
+        'so_thang_ca_nhan': so_thang_ca_nhan,
         'thu_thach_1': thu_thach_1, 'thu_thach_2': thu_thach_2,
         'thu_thach_3': thu_thach_3, 'thu_thach_4': thu_thach_4,
-        'so_can_bang': so_can_bang, 'so_linh_hon': so_linh_hon,
-        'so_su_menh': so_su_menh, 'so_thuc_thi': so_thuc_thi,
+        'so_linh_hon': so_linh_hon,
+        'so_su_menh': so_su_menh,
         'so_nhan_cach': so_nhan_cach, 'so_phat_trien': so_phat_trien,
         'so_truong_thanh': so_truong_thanh, 'so_noi_cam': so_noi_cam,
         'text_name': text_name, 'the_nhan_dang': the_nhan_dang, 'leak_num': leak_num,

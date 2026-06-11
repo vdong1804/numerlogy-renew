@@ -731,13 +731,6 @@ INDICATOR_SPECS: dict[str, dict] = {
         "intro": "Số Thái Độ thể hiện ấn tượng đầu tiên và cách bạn phản ứng tự nhiên trước cuộc sống.",
         "fields": ["outer"],
     },
-    "BalanceNumber": {
-        "model": "BalanceNumber",
-        "label": "Số Cân Bằng",
-        "codes": _MASTER,
-        "intro": "Số Cân Bằng chỉ ra cách bạn nên hành xử để lấy lại sự ổn định khi rơi vào căng thẳng hay khủng hoảng.",
-        "fields": ["advice"],
-    },
     "DevelopmentNumber": {
         "model": "DevelopmentNumber",
         "label": "Số Trưởng Thành",
@@ -751,13 +744,6 @@ INDICATOR_SPECS: dict[str, dict] = {
         "codes": _BASIC,
         "intro": "Số Ngày Sinh tiết lộ một tài năng thiên bẩm đặc biệt mà bạn mang theo từ khi chào đời.",
         "fields": ["talent"],
-    },
-    "ExecutionNumber": {
-        "model": "ExecutionNumber",
-        "label": "Số Thực Thi",
-        "codes": _BASIC,
-        "intro": "Số Thực Thi cho biết cách bạn bắt tay vào hành động và biến ý tưởng thành kết quả.",
-        "fields": ["action"],
     },
     "KarmicNumber": {
         "model": "KarmicNumber",

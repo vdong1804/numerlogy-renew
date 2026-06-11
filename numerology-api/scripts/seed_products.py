@@ -64,7 +64,6 @@ PRODUCTS = [
             "main_number",
             "souls_number",
             "mission_number",
-            "execution_number",
         ],
         "sort_order": 40,
     },
@@ -76,7 +75,7 @@ PRODUCTS = [
         "description": "Phan tich tinh yeu va moi quan he",
         "price": 149000,
         "template_name": "report-love.html",
-        "content_codes": ["souls_number", "personal_year_number", "attitude_number"],
+        "content_codes": ["souls_number", "attitude_number"],
         "sort_order": 50,
     },
     {

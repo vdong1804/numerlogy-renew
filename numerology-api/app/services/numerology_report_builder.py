@@ -65,8 +65,6 @@ def build_report(
         "thai_do": ("attitude_number", calc["so_thai_do"]),
         "truong_thanh": ("development_number", calc["so_truong_thanh"]),
         "ngay_sinh": ("birth_number", calc["so_ngay_sinh"]),
-        "can_bang": ("balance_number", calc["so_can_bang"]),
-        "thuc_thi": ("execution_number", calc["so_thuc_thi"]),
         "noi_cam": ("karmic_number", calc["so_noi_cam"]),
     }
     core_numbers = {
@@ -94,7 +92,6 @@ def build_report(
     ]
 
     personal = {
-        "nam_ca_nhan": _row(models.get("personal_year_number"), calc["so_nam_ca_nhan"]),
         "thang_ca_nhan": _row(models.get("personal_month_number"), calc["so_thang_ca_nhan"]),
     }
 

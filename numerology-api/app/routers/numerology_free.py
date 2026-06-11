@@ -15,8 +15,9 @@ from app.core.numerology import calculate_numerology_numbers
 from app.db.models.numerology_content import MainNumber
 from app.deps import get_db
 from app.services.horoscope_client import gen_horoscopes
-from app.services.numerology_context import build_common_context, save_user_download
-from app.services.numerology_db import fetch_by_code, get_free_extra_models, get_numerology_models
+from app.services.numerology_context import save_user_download
+from app.services.numerology_db import fetch_by_code
+from app.services.numerology_full_report import build_report_view
 from app.utils.pdf import render_html, render_pdf
 
 logger = logging.getLogger(__name__)
@@ -89,17 +90,12 @@ async def so_hoc_free(
     )
 
     try:
-        calc = calculate_numerology_numbers(birth_day, full_name)
+        report = await build_report_view(db, full_name, birth_day, phone_digits)
     except ValueError as exc:
         raise HTTPException(400, str(exc))
 
-    models = await get_numerology_models(db, calc)
-    extra = await get_free_extra_models(db, birth_day, phone_digits)
-    context = build_common_context(full_name, birth_day, phone_digits, calc, models)
-    context.update(extra)
-
     try:
-        pdf_bytes = await render_pdf('invoice-free.html', context)
+        pdf_bytes = await render_pdf('invoice-free.html', {'report': report})
     except RuntimeError:
         raise HTTPException(500, 'Không thể tạo file PDF, vui lòng thử lại')
 
@@ -140,10 +136,8 @@ async def top(
         raise HTTPException(400, 'Ngày sinh không hợp lệ')
 
     try:
-        calc = calculate_numerology_numbers(birth_day, full_name)
+        report = await build_report_view(db, full_name, birth_day, phone)
     except ValueError as exc:
         raise HTTPException(400, str(exc))
 
-    models = await get_numerology_models(db, calc)
-    context = build_common_context(full_name, birth_day, phone, calc, models)
-    return HTMLResponse(content=render_html('invoice.html', context))
+    return HTMLResponse(content=render_html('invoice.html', {'report': report}))

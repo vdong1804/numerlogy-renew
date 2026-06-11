@@ -14,11 +14,9 @@ from sqlalchemy.dialects.postgresql import insert
 
 from app.db.models.numerology_content import (
     AttitudeNumber,
-    BalanceNumber,
     BirthdayNumber,
     ChallengeLife,
     DevelopmentNumber,
-    ExecutionNumber,
     KarmicNumber,
     LifePeak,
     MainNumber,
@@ -44,10 +42,8 @@ _MODEL_MAP = {
     "SoulsNumber": SoulsNumber,
     "MatureNumber": MatureNumber,
     "AttitudeNumber": AttitudeNumber,
-    "BalanceNumber": BalanceNumber,
     "DevelopmentNumber": DevelopmentNumber,
     "BirthdayNumber": BirthdayNumber,
-    "ExecutionNumber": ExecutionNumber,
     "KarmicNumber": KarmicNumber,
     "PersonalMonthNumber": PersonalMonthNumber,
     "MissNumber": MissNumber,

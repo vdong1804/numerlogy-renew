@@ -1,8 +1,10 @@
 """Unit tests for calculate_numerology_numbers core logic."""
 
+from datetime import datetime
+
 import pytest
 
-from app.core.numerology import calculate_numerology_numbers
+from app.core.numerology import calculate_numerology_numbers, get_sum
 
 
 class TestNumerologyCalcBasic:
@@ -17,12 +19,15 @@ class TestNumerologyCalcBasic:
         # Verify all expected keys exist and are integers
         expected_keys = {
             "so_chu_dao", "so_ngay_sinh", "so_thang_sinh", "so_nam_sinh",
-            "so_thai_do", "so_nam_ca_nhan", "so_thang_ca_nhan",
-            "so_su_menh", "so_thuc_thi", "so_nhan_cach",
-            "so_can_bang", "so_linh_hon", "so_phat_trien",
+            "so_thai_do", "so_thang_ca_nhan",
+            "so_su_menh", "so_nhan_cach",
+            "so_linh_hon", "so_phat_trien",
             "so_truong_thanh", "so_noi_cam",
             "text_name", "leak_num",
         }
+        # số cân bằng / số thực thi removed — not present in the Excel template
+        assert "so_can_bang" not in result
+        assert "so_thuc_thi" not in result
         assert all(k in result for k in expected_keys)
         # Numerology numbers should be 1-9 (or 11/22/33 for master)
         assert 1 <= result["so_chu_dao"] <= 9
@@ -94,41 +99,24 @@ class TestNumerologyCalcMasterNumbers:
             assert 1 <= result["so_truong_thanh"] <= 9
 
 
-class TestNumerologyCalcAgeVariants:
-    """Age-dependent calculations."""
+class TestNumerologyCalcPersonalMonth:
+    """Số tháng cá nhân — Số năm cá nhân removed from output (internal only).
 
-    def test_young_age_branch(self):
-        """age < 25 - so_chu_dao: so_nam_ca_nhan = 11."""
-        # Force young age
-        result = calculate_numerology_numbers(
-            birth_day="15101990",
-            full_name="Nguyen A",
-            current_age=10,  # 10 years old
-        )
-        # Should be in young branch
-        assert result["so_nam_ca_nhan"] in [10, 11]
+    so_thang_ca_nhan = reduce(internal_personal_year + current_month),
+    internal_personal_year = reduce(reduce(current_year) + so_thai_do).
+    """
 
-    def test_elderly_age_branch(self):
-        """age >= 54 + so_chu_dao: so_nam_ca_nhan = 10."""
-        result = calculate_numerology_numbers(
-            birth_day="15101990",
-            full_name="Nguyen A",
-            current_age=80,  # 80 years old
-        )
-        # Should be in elderly branch
-        assert result["so_nam_ca_nhan"] == 10
+    def test_so_nam_ca_nhan_removed(self):
+        result = calculate_numerology_numbers("15101990", "Nguyen A")
+        assert "so_nam_ca_nhan" not in result
 
-    def test_middle_age_so_nam_ca_nhan_zero_wrap(self):
-        """Intermediate calc yields 0 → redirect to 9 (line 113)."""
-        # Force middle age to trigger calculation
-        result = calculate_numerology_numbers(
-            birth_day="15101990",
-            full_name="Nguyen A",
-            current_age=35,
-        )
-        # Result should never be 0 (wrapped to 9)
-        assert result["so_nam_ca_nhan"] != 0
-        assert 1 <= result["so_nam_ca_nhan"] <= 11
+    def test_personal_month_formula(self):
+        result = calculate_numerology_numbers("15101990", "Nguyen A")
+        now = datetime.now()
+        internal_year = get_sum(get_sum(now.year) + result["so_thai_do"]) or 9
+        expected = get_sum(internal_year + now.month)
+        assert result["so_thang_ca_nhan"] == expected
+        assert 1 <= result["so_thang_ca_nhan"] <= 9
 
 
 class TestNumerologyCalcRedirects:
@@ -146,30 +134,6 @@ class TestNumerologyCalcRedirects:
         assert result["thu_thach_2"] != 0
         assert result["thu_thach_3"] != 0
         assert result["thu_thach_4"] != 0
-
-    def test_so_thuc_thi_zero_redirects(self):
-        """If so_thuc_thi = 0, redirect to 9."""
-        result = calculate_numerology_numbers(
-            birth_day="15101990",
-            full_name="Nguyen Van A",
-        )
-        # so_thuc_thi should never be 0
-        assert result["so_thuc_thi"] != 0
-
-
-class TestNumerologyCalcNegativeWrap:
-    """Negative intermediate wraps (+9 rule)."""
-
-    def test_negative_intermediate_wrap(self):
-        """so_nam_ca_nhan < 0 wraps via += 9 (line 81-82)."""
-        # Force condition where calculation yields negative
-        result = calculate_numerology_numbers(
-            birth_day="15101990",
-            full_name="A",
-            current_age=30,
-        )
-        # After wrap, should be positive 1-9
-        assert result["so_nam_ca_nhan"] > 0
 
 
 class TestNumerologyCalcNameAnalysis:
@@ -249,10 +213,33 @@ class TestNumerologyCalcSnapshot:
         assert isinstance(result, dict)
         assert "so_chu_dao" in result
         assert "so_su_menh" in result
-        assert "so_thuc_thi" in result
+        assert "so_thang_ca_nhan" in result
 
         # Type checks on sample keys
         assert isinstance(result["so_chu_dao"], int)
         assert isinstance(result["so_su_menh"], int)
         assert isinstance(result["leak_num"], list)
         assert isinstance(result["text_name"], str)
+
+
+class TestNumerologyCalcMissingNumbers:
+    """Số thiếu (leak_num) — Excel scope: birth date + full name + 7 core numbers."""
+
+    def test_leak_num_excludes_birth_and_core_digits(self):
+        """Digits present in birth date / name / core numbers are NOT in leak_num."""
+        result = calculate_numerology_numbers(
+            birth_day="15101990",
+            full_name="Nguyen Van A",
+        )
+        present = (
+            set("15101990")
+            | set(result["text_name"])
+            | {str(get_sum(result[k])) for k in (
+                "so_chu_dao", "so_su_menh", "so_linh_hon", "so_nhan_cach",
+                "so_ngay_sinh", "so_thai_do", "so_truong_thanh",
+            )}
+        )
+        for n in result["leak_num"]:
+            assert str(n) not in present
+        # leak ⊆ 1-9 and disjoint from present
+        assert all(n in range(1, 10) for n in result["leak_num"])

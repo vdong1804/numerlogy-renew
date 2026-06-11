@@ -12,10 +12,10 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models.numerology_content import (
-    AttitudeNumber, BalanceNumber, BirthdayChart, BirthdayNumber,
-    ChallengeLife, DevelopmentNumber, ExecutionNumber, Identifiable,
+    AttitudeNumber, BirthdayChart, BirthdayNumber,
+    ChallengeLife, DevelopmentNumber, Identifiable,
     IntrospectiveNumber, KarmicNumber, LifePeak, MainNumber, MatureNumber,
-    MissNumber, MissionNumber, PersonalMonthNumber, PersonalYearNumber,
+    MissNumber, MissionNumber, PersonalMonthNumber,
     PhoneNumber, SoulsNumber, StagesOfLife,
 )
 
@@ -64,9 +64,6 @@ async def get_numerology_models(db: AsyncSession, calc: dict) -> dict:
         'karmic_number': await fetch_by_code(db, KarmicNumber, calc['so_noi_cam']),
         'mature_number': await fetch_by_code(db, MatureNumber, calc['so_nhan_cach']),
         'souls_number': await fetch_by_code(db, SoulsNumber, calc['so_linh_hon']),
-        'balance_number': await fetch_by_code(db, BalanceNumber, calc['so_can_bang']),
-        'execution_number': await fetch_by_code(db, ExecutionNumber, calc['so_thuc_thi']),
-        'personal_year_number': await fetch_by_code(db, PersonalYearNumber, calc['so_nam_ca_nhan']),
         'personal_month_number': await fetch_by_code(db, PersonalMonthNumber, calc['so_thang_ca_nhan']),
         'miss_number': miss_rows,
     }
