@@ -17,7 +17,6 @@ from app.services.chat.kb_ingestion_service import KbIngestionService
 
 class _FakeEmbeddings(EmbeddingService):
     def __init__(self) -> None:
-        self._api_key = "fake"
         self._model = "fake"
         self._batch_size = 100
         self._max_retries = 1

@@ -1,12 +1,11 @@
-"""Shared google-genai client builder.
+"""Shared google-genai client builder — Vertex AI via a service-account JSON.
 
-Auth priority (used by both report image generation and chat embeddings):
-  1. Vertex AI via a service-account JSON — `settings.google_application_credentials`
-     (runs on GCP billing; project read from the JSON if not set explicitly).
-  2. AI Studio API key — `settings.gemini_api_key`.
+Used by both report image generation and chat embeddings. The whole project
+authenticates through one GCP service account (runs on GCP billing); there is
+no AI Studio API-key path.
 
-Centralizing this lets the whole project move to Vertex by dropping a service
-account in, with the API key as a fallback.
+Config: `settings.google_application_credentials` points at the service-account
+JSON; the project id is read from the JSON when `google_cloud_project` is blank.
 """
 
 from __future__ import annotations
@@ -27,8 +26,8 @@ def _service_account_path() -> Path | None:
 
 
 def is_genai_configured() -> bool:
-    """True when genai has usable auth (service account or API key)."""
-    return _service_account_path() is not None or bool(settings.gemini_api_key)
+    """True when a usable Vertex AI service account is configured."""
+    return _service_account_path() is not None
 
 
 def _project_id(sa: Path) -> str:
@@ -38,23 +37,20 @@ def _project_id(sa: Path) -> str:
 
 
 def build_genai_client():
-    """Build a configured google-genai Client (Vertex SA preferred, else API key)."""
+    """Build a Vertex AI google-genai Client from the service account."""
     from google import genai
+    from google.oauth2 import service_account
 
     sa = _service_account_path()
-    if sa is not None:
-        from google.oauth2 import service_account
-
-        creds = service_account.Credentials.from_service_account_file(str(sa), scopes=_SCOPES)
-        return genai.Client(
-            vertexai=True,
-            project=_project_id(sa),
-            location=settings.google_cloud_location,
-            credentials=creds,
+    if sa is None:
+        raise RuntimeError(
+            "no genai auth: set google_application_credentials to a Vertex AI "
+            "service-account JSON"
         )
-    if settings.gemini_api_key:
-        return genai.Client(api_key=settings.gemini_api_key)
-    raise RuntimeError(
-        "no genai auth: set google_application_credentials (service account) "
-        "or gemini_api_key"
+    creds = service_account.Credentials.from_service_account_file(str(sa), scopes=_SCOPES)
+    return genai.Client(
+        vertexai=True,
+        project=_project_id(sa),
+        location=settings.google_cloud_location,
+        credentials=creds,
     )

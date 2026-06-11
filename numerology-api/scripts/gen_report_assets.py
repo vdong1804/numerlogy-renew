@@ -9,8 +9,8 @@ never garbled by the image model.
 Prompts + generation are shared with the runtime per-user cover pipeline
 (app/services/report_art_prompts.py, image_gen.py) → single source of truth.
 
-Usage (needs a billing-enabled Google key in env or numerology-api/.env):
-    GEMINI_API_KEY=... python scripts/gen_report_assets.py
+Usage (needs the Vertex AI service account configured in numerology-api/.env):
+    python scripts/gen_report_assets.py
     python scripts/gen_report_assets.py --only 8 cover     # regenerate a subset
     python scripts/gen_report_assets.py --model imagen-4.0-ultra-generate-001
 """
@@ -57,7 +57,7 @@ def main() -> None:
 
     if not is_configured():
         sys.exit("ERROR: no image-gen auth. Set google_application_credentials "
-                 "(service-account JSON, Vertex AI) or gemini_api_key in .env.")
+                 "(Vertex AI service-account JSON) in .env.")
     client = build_client()  # reuse one client across the whole batch
     targets = _TARGETS
     if args.only:

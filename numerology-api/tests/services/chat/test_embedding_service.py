@@ -16,7 +16,7 @@ def _mock_resp(vectors: list[list[float]]) -> SimpleNamespace:
 
 
 def _make_service(mock_client: MagicMock) -> EmbeddingService:
-    svc = EmbeddingService(api_key="test-key", batch_size=2, max_retries=3)
+    svc = EmbeddingService(batch_size=2, max_retries=3)
     svc._client = mock_client
     return svc
 

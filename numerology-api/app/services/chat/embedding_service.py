@@ -47,14 +47,10 @@ class EmbeddingService:
 
     def __init__(
         self,
-        api_key: Optional[str] = None,
         model: Optional[str] = None,
         batch_size: Optional[int] = None,
         max_retries: int = 3,
     ) -> None:
-        # Explicit api_key forces AI Studio mode (tests); otherwise the shared
-        # builder picks Vertex AI (service account) or the configured key.
-        self._api_key = api_key
         self._model = model or settings.embedding_model
         self._batch_size = batch_size or settings.embedding_batch_size
         self._max_retries = max_retries
@@ -66,15 +62,12 @@ class EmbeddingService:
     @property
     def client(self) -> genai.Client:
         if self._client is None:
-            if self._api_key:
-                self._client = genai.Client(api_key=self._api_key)
-            elif is_genai_configured():
-                self._client = build_genai_client()
-            else:
+            if not is_genai_configured():
                 raise EmbeddingError(
                     "no genai auth: set google_application_credentials "
-                    "(service account) or GEMINI_API_KEY"
+                    "(Vertex AI service account)"
                 )
+            self._client = build_genai_client()
         return self._client
 
     # -- Public API -------------------------------------------------------

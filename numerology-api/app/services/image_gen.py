@@ -1,13 +1,7 @@
-"""Google image generation + PNG optimization (shared by the asset script and
+"""Google image generation + JPEG optimization (shared by the asset script and
 the runtime cover pipeline).
 
-Auth (in priority order):
-  1. Vertex AI via a service-account JSON — `settings.google_application_credentials`
-     (needs GCP billing; project read from the JSON if not set explicitly).
-  2. AI Studio API key — `settings.gemini_api_key` (image gen needs a paid key).
-
-Embeddings elsewhere keep using the API key; only image generation prefers the
-service account so it can run on GCP billing.
+Auth goes through the shared Vertex AI client (see genai_client.build_genai_client).
 """
 
 from __future__ import annotations
