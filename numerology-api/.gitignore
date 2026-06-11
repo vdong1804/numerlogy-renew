@@ -39,3 +39,12 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Runtime-generated media (report PDFs, per-user cover cache) — not source
+media/
+
+# Google service-account credentials — NEVER commit
+secrets/
+*service-account*.json
+*-sa.json
+gcp-*.json
