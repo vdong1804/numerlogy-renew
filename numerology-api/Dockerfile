@@ -1,17 +1,19 @@
 FROM python:3.12-slim-bookworm
 
-# System deps: wkhtmltopdf + Vietnamese/CJK fonts
+# System deps: WeasyPrint (Pango/Cairo/gdk-pixbuf) + Vietnamese/CJK fonts
 RUN apt-get update && apt-get install -y --no-install-recommends \
         curl \
-        fontconfig \
-        libxrender1 \
-        libjpeg62-turbo \
-        libxtst6 \
-        xfonts-75dpi \
-        xfonts-base \
-        xz-utils \
         wget \
-        wkhtmltopdf \
+        fontconfig \
+        shared-mime-info \
+        libpango-1.0-0 \
+        libpangocairo-1.0-0 \
+        libpangoft2-1.0-0 \
+        libcairo2 \
+        libgdk-pixbuf-2.0-0 \
+        libffi8 \
+        libjpeg62-turbo \
+        fonts-dejavu-core \
         fonts-noto-cjk \
         fonts-arphic-ukai \
         fonts-arphic-uming \

@@ -1,33 +1,38 @@
-"""PDF rendering utilities using Jinja2 + pdfkit (wkhtmltopdf).
+"""PDF rendering utilities using Jinja2 + WeasyPrint.
 
 render_html() — sync, returns HTML string
-render_pdf()  — async (offloads pdfkit to thread), returns PDF bytes
+render_pdf()  — async (offloads WeasyPrint to a thread), returns PDF bytes
+
+WeasyPrint (replaces the legacy wkhtmltopdf/pdfkit engine) supports modern
+print CSS: @page margin boxes, page counters, gradients, border-radius,
+embedded SVG and local web fonts. Templates resolve relative asset URLs
+(images, fonts) against ``base_url`` = the project root, so a template can
+reference e.g. ``static/report-assets/x.webp`` directly.
 """
 
 import asyncio
 import logging
-import os
 from pathlib import Path
 
-import pdfkit
 from jinja2 import Environment, FileSystemLoader, select_autoescape
+from weasyprint import CSS, HTML
 
 logger = logging.getLogger(__name__)
 
 # Absolute path to app/templates — works regardless of cwd
 _TEMPLATES_DIR = Path(__file__).parent.parent / 'templates'
 
-# wkhtmltopdf options matching Django's PDF_OPTIONS
-_PDF_OPTIONS: dict = {
-    'page-size': 'Letter',
-    'margin-top': '0.3in',
-    'margin-right': '0.6in',
-    'margin-bottom': '0.3in',
-    'margin-left': '0.6in',
-    'encoding': 'UTF-8',
-    'enable-local-file-access': '',
-    'custom-header': [('Accept-Encoding', 'gzip')],
-}
+# Project root (two levels above app/) — base for resolving local static assets
+_BASE_DIR = Path(__file__).parent.parent.parent
+
+# Default page geometry, mirroring the legacy wkhtmltopdf PDF_OPTIONS
+# (Letter, 0.3in top/bottom, 0.6in left/right). Templates may override via
+# their own @page rules (e.g. reports/_theme.css) — author stylesheets win.
+_DEFAULT_PAGE_CSS = CSS(string='@page { size: Letter; margin: 0.3in 0.6in; }')
+
+# base_url must end with a separator so relative URLs join against the project
+# directory rather than dropping its last path segment.
+_BASE_URL = _BASE_DIR.as_uri() + '/'
 
 # Jinja2 environment — autoescape ON for HTML safety
 # safe filter preserved for trusted DB rich-text fields
@@ -39,15 +44,13 @@ _jinja_env = Environment(
 
 def _get_base_dir() -> str:
     """Return BASE_DIR for static file paths in PDF templates."""
-    # Resolve to the project root (two levels above app/)
-    return str(Path(__file__).parent.parent.parent)
+    return str(_BASE_DIR)
 
 
 def render_html(template_name: str, context: dict) -> str:
-    """Render a Jinja2 template to HTML string.
+    """Render a Jinja2 template to an HTML string.
 
-    Injects base_dir so templates can reference local static assets via
-    file://{{ base_dir }}/staticfiles/... (required by wkhtmltopdf).
+    Injects ``base_dir`` so templates can reference local static assets.
 
     Args:
         template_name: filename relative to app/templates/
@@ -61,20 +64,22 @@ def render_html(template_name: str, context: dict) -> str:
     return template.render(ctx)
 
 
-def _run_pdfkit(html: str) -> bytes:
-    """Sync wrapper around pdfkit.from_string() — called via asyncio.to_thread."""
+def _run_weasyprint(html: str) -> bytes:
+    """Sync WeasyPrint render — called via asyncio.to_thread."""
     try:
-        return pdfkit.from_string(html, output_path=False, options=_PDF_OPTIONS)
+        return HTML(string=html, base_url=_BASE_URL).write_pdf(
+            stylesheets=[_DEFAULT_PAGE_CSS],
+        )
     except Exception as exc:
-        logger.error('pdfkit generation failed: %s', exc)
+        logger.error('WeasyPrint generation failed: %s', exc)
         raise RuntimeError(f'PDF generation failed: {exc}') from exc
 
 
 async def render_pdf(template_name: str, context: dict) -> bytes:
-    """Render template to PDF bytes asynchronously.
+    """Render a template to PDF bytes asynchronously.
 
-    Renders HTML synchronously then offloads wkhtmltopdf to a thread
-    so the event loop is not blocked.
+    Renders HTML synchronously then offloads WeasyPrint to a thread so the
+    event loop is not blocked.
 
     Args:
         template_name: filename relative to app/templates/
@@ -84,7 +89,7 @@ async def render_pdf(template_name: str, context: dict) -> bytes:
         Raw PDF bytes
 
     Raises:
-        RuntimeError: if wkhtmltopdf fails
+        RuntimeError: if WeasyPrint fails
     """
     html = render_html(template_name, context)
-    return await asyncio.to_thread(_run_pdfkit, html)
+    return await asyncio.to_thread(_run_weasyprint, html)

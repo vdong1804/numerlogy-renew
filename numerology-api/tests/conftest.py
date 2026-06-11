@@ -240,7 +240,7 @@ async def mock_horoscope(respx_mock):
 
 @pytest.fixture
 async def mock_pdf(monkeypatch):
-    """Mock PDF rendering (wkhtmltopdf may not be available in tests)."""
+    """Mock PDF rendering (WeasyPrint native deps may not be available in tests)."""
     def mock_render(html: str, **kwargs) -> bytes:
         return b"%PDF-1.4 mock\n%Mock PDF stub for testing\n" + html.encode()[:100]
 
