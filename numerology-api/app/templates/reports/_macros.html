@@ -26,7 +26,41 @@
 </div>
 {% endmacro %}
 
-{# Gold ornamental divider. #}
+{# Gold ornamental divider — inline SVG motif (no asset/font dependency). #}
 {% macro divider() %}
-<div class="divider"><span class="diamond">&#9670;</span></div>
+<div class="divider">
+  <svg class="divider-motif" viewBox="0 0 120 16" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <g fill="none" stroke="#c9a227" stroke-width="1">
+      <line x1="6" y1="8" x2="44" y2="8"/>
+      <line x1="76" y1="8" x2="114" y2="8"/>
+    </g>
+    <circle cx="52" cy="8" r="2" fill="#c9a227"/>
+    <path d="M60 2 L66 8 L60 14 L54 8 Z" fill="#c9a227"/>
+    <circle cx="68" cy="8" r="2" fill="#c9a227"/>
+  </svg>
+</div>
+{% endmacro %}
+
+{# Cosmic chart page: one full-page section wrapping a pre-built inline SVG
+   (from app.services.report_charts.build_charts). Caller guards `{% if svg %}`;
+   the macro also self-guards so a missing single chart is skipped silently. #}
+{% macro chart_block(title, subtitle, svg) %}
+{% if svg %}
+<section class="new-page section chart-page">
+    <h1 class="section-title">{{ title }}</h1>
+    {% if subtitle %}<p class="section-subtitle">{{ subtitle }}</p>{% endif %}
+    <div class="chart-wrap">{{ svg|safe }}</div>
+</section>
+{% endif %}
+{% endmacro %}
+
+{# Render the 4 cosmic charts from a `charts` dict. Shared by base_report.html
+   (fulfillment) and invoice*.html (direct route) — single source of truth. #}
+{% macro chart_pages(charts) %}
+{% if charts %}
+{{ chart_block("Biểu đồ sức mạnh", "Tần suất các con số trong tên và ngày sinh", charts.power) }}
+{{ chart_block("Bản đồ năng lượng cốt lõi", "Radar các chỉ số chủ đạo", charts.radar) }}
+{{ chart_block("Hành trình các Đỉnh cao", "Bốn giai đoạn theo tuổi", charts.timeline) }}
+{{ chart_block("Vòng chu kỳ 9 năm", "Năm cá nhân hiện tại của bạn", charts.wheel) }}
+{% endif %}
 {% endmacro %}

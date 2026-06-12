@@ -22,6 +22,7 @@ from app.db.models.order import Order
 from app.db.models.product import Product, ProductItem
 from app.db.models.user_report import UserReport
 from app.services.cover_generator import get_cover_background
+from app.services.report_charts import build_charts
 from app.utils.pdf import render_pdf
 
 logger = logging.getLogger(__name__)
@@ -275,6 +276,7 @@ async def _render_report_pdf(
         "order_id": order_id,
         "user_id": user_id,
         "cover_bg": await _resolve_cover_bg(input_payload),
+        "charts": _resolve_charts(input_payload),
         "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
     }
 
@@ -313,6 +315,25 @@ async def _resolve_cover_bg(input_payload: dict) -> Optional[str]:
         return await get_cover_background(so_chu_dao)
     except Exception as exc:  # noqa: BLE001 — fail-safe
         logger.warning("cover bg resolution skipped: %s", exc)
+        return None
+
+
+def _resolve_charts(input_payload: dict) -> Optional[dict]:
+    """Compute the 4 cosmic charts from the order input (name + birth_day).
+
+    Fully guarded: missing/invalid input → None so the template skips charts.
+    build_charts is pure CPU (no DB/IO) and fast → called synchronously. Never
+    raises — must not block fulfillment.
+    """
+    try:
+        name = input_payload.get("name") or input_payload.get("full_name") or ""
+        birth_day = "".join(c for c in str(input_payload.get("birth_day", "")) if c.isdigit())
+        if not name or not birth_day:
+            return None
+        calc = calculate_numerology_numbers(birth_day, name)
+        return build_charts(calc, birth_day)
+    except Exception as exc:  # noqa: BLE001 — fail-safe
+        logger.warning("chart resolution skipped: %s", exc)
         return None
 
 

@@ -22,6 +22,10 @@
     size: Letter;
     margin: 22mm 18mm 20mm;
     background-color: #fbf8f0;  /* full-bleed cream sheet (body bg left transparent) */
+    /* Very faint gold star watermark (cosmic accent that keeps text legible). */
+    background-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='300'%20height='300'%3E%3Cg%20fill='%23c9a227'%20opacity='.10'%3E%3Ccircle%20cx='40'%20cy='50'%20r='1.4'/%3E%3Ccircle%20cx='130'%20cy='30'%20r='1'/%3E%3Ccircle%20cx='240'%20cy='70'%20r='1.6'/%3E%3Ccircle%20cx='80'%20cy='150'%20r='1'/%3E%3Ccircle%20cx='200'%20cy='180'%20r='1.3'/%3E%3Ccircle%20cx='280'%20cy='210'%20r='1'/%3E%3Ccircle%20cx='50'%20cy='250'%20r='1.4'/%3E%3Ccircle%20cx='160'%20cy='270'%20r='1'/%3E%3C/g%3E%3C/svg%3E");
+    background-repeat: repeat;
+    background-size: 300px 300px;
     @top-center {
         content: "THẦN SỐ HỌC PYTAGO";
         font-family: "Playfair Display", serif;
@@ -52,6 +56,30 @@
     @top-center { content: none; }
     @bottom-center { content: none; }
     @bottom-right { content: none; }
+}
+/* Chart page = dark "cosmic" sheet (gold-on-navy SVG charts live here). */
+@page chart {
+    margin: 20mm 16mm 18mm;
+    background-color: #001026;
+    background-image:
+        url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='320'%20height='320'%3E%3Cg%20fill='%23ffffff'%3E%3Ccircle%20cx='30'%20cy='40'%20r='1.2'/%3E%3Ccircle%20cx='90'%20cy='20'%20r='.8'/%3E%3Ccircle%20cx='160'%20cy='60'%20r='1.5'/%3E%3Ccircle%20cx='220'%20cy='30'%20r='.9'/%3E%3Ccircle%20cx='280'%20cy='70'%20r='1.1'/%3E%3Ccircle%20cx='50'%20cy='120'%20r='.9'/%3E%3Ccircle%20cx='130'%20cy='150'%20r='1.3'/%3E%3Ccircle%20cx='200'%20cy='130'%20r='.8'/%3E%3Ccircle%20cx='300'%20cy='160'%20r='1'/%3E%3Ccircle%20cx='40'%20cy='220'%20r='1.2'/%3E%3Ccircle%20cx='110'%20cy='250'%20r='.8'/%3E%3Ccircle%20cx='180'%20cy='230'%20r='1.4'/%3E%3Ccircle%20cx='250'%20cy='270'%20r='1'/%3E%3Ccircle%20cx='300'%20cy='240'%20r='.8'/%3E%3C/g%3E%3Cg%20stroke='%23c9a227'%20stroke-width='.5'%20opacity='.45'%3E%3Cline%20x1='160'%20y1='60'%20x2='220'%20y2='30'/%3E%3Cline%20x1='220'%20y1='30'%20x2='280'%20y2='70'/%3E%3Cline%20x1='130'%20y1='150'%20x2='200'%20y2='130'/%3E%3C/g%3E%3C/svg%3E"),
+        radial-gradient(circle at 50% 30%, #12306a 0%, #001a4d 55%, #000a1f 100%);
+    background-repeat: repeat, no-repeat;
+    background-size: 320px 320px, cover;
+    @top-center {
+        content: "THẦN SỐ HỌC PYTAGO";
+        font-family: "Playfair Display", serif; font-size: 8pt;
+        letter-spacing: 3pt; color: #e3c970; padding-bottom: 4mm;
+    }
+    @bottom-center {
+        content: counter(page);
+        font-family: "Playfair Display", serif; font-size: 9pt; color: #e3c970;
+        padding-top: 4mm;
+    }
+    @bottom-right {
+        content: "nhansinhquan.vn"; font-family: "Lora", serif; font-size: 7pt;
+        color: rgba(227, 201, 112, .55); padding-top: 4mm;
+    }
 }
 
 /* ── Base typography ────────────────────────────────────────────────────── */
@@ -89,10 +117,15 @@ strong { color: var(--navy); }
     min-height: calc(100vh - 96mm);
     padding: 30mm 16mm;
     /* optional art behind the frame (P3 static / P4 per-user); the navy overlay
-       keeps cream text legible over any background image. */
-    background-image: linear-gradient(rgba(0, 22, 64, .42), rgba(0, 22, 64, .60)), var(--cover-bg, none);
-    background-size: cover, cover;
-    background-position: center, center;
+       keeps cream text legible over any background image. A small gold corner
+       flourish sits top-left as a cosmic accent (skipped if the asset is gone). */
+    background-image:
+        url("static/report-assets/ornaments/corner-flourish.svg"),
+        linear-gradient(rgba(0, 22, 64, .42), rgba(0, 22, 64, .60)),
+        var(--cover-bg, none);
+    background-repeat: no-repeat, no-repeat, no-repeat;
+    background-size: 22mm 22mm, cover, cover;
+    background-position: 5mm 5mm, center, center;
 }
 .cover .eyebrow { font-family: "Lora", serif; letter-spacing: 6pt; font-size: 1.2rem; color: var(--gold-soft); text-transform: uppercase; }
 .cover .brand { font-family: "Playfair Display", serif; font-weight: 800; font-size: 4.6rem; letter-spacing: 1pt; margin: 1.2rem 0 .4rem; }
@@ -113,18 +146,23 @@ strong { color: var(--navy); }
 }
 .section-subtitle { text-align: center; font-style: italic; color: var(--navy-soft); font-size: 1.7rem; margin: 0 0 1.4rem; }
 
-/* ── Gold ornamental divider ────────────────────────────────────────────── */
-.divider { text-align: center; margin: 2rem 0; color: var(--gold); }
-.divider::before, .divider::after { content: ""; display: inline-block; width: 30%; height: .5pt; background: var(--gold); vertical-align: middle; margin: 0 1.2rem; }
-.divider .diamond { font-size: 1.4rem; vertical-align: middle; }
+/* ── Gold ornamental divider (inline SVG motif from m.divider) ───────────── */
+.divider { text-align: center; margin: 2rem 0; }
+.divider-motif { width: 52mm; height: auto; }
 
 /* ── Number badge (Số chủ đạo hero) ─────────────────────────────────────── */
 .number-badge {
+    position: relative;
     width: 26mm; height: 26mm; margin: 0 auto 1.2rem;
     border: 1.5pt solid var(--gold); border-radius: 50%;
     background: var(--navy); color: var(--gold-soft);
     font-family: "Playfair Display", serif; font-weight: 700; font-size: 4.2rem;
     display: flex; align-items: center; justify-content: center;
+}
+/* Gold glow halo behind the badge — radial-gradient (NOT filter: blur). */
+.number-badge::before {
+    content: ""; position: absolute; inset: -7mm; border-radius: 50%; z-index: -1;
+    background: radial-gradient(circle, rgba(201, 162, 39, .50) 0%, rgba(201, 162, 39, 0) 70%);
 }
 
 /* ── Archetype illustration (Số chủ đạo hero, P3) ───────────────────────── */
@@ -158,6 +196,34 @@ blockquote, .content blockquote {
 .cta { text-align: center; padding-top: 8rem; }
 .cta .box { max-width: 78%; margin: 2.4rem auto 0; padding: 2.6rem; border: 1pt dashed var(--gold); border-radius: 4pt; background: #fff; }
 .cta .box p { text-align: center; }
+
+/* ── Cosmic chart pages (dark) + chart sizing ───────────────────────────── */
+.chart-page {
+    page: chart; color: var(--cream);
+    /* Faint sacred-geometry watermark behind the chart (degrades to nothing
+       if the asset is missing — WeasyPrint skips an unresolved background). */
+    background-image: url("static/report-assets/ornaments/sacred-geometry-watermark.svg");
+    background-repeat: no-repeat;
+    background-position: center 64%;
+    background-size: 86mm 86mm;
+}
+.chart-page .section-title { color: var(--gold-soft); }
+.chart-page .section-title::after { background: var(--gold); }
+.chart-page .section-subtitle { color: #cdd6ea; }
+/* SVG display sizes (the SVGs carry .chart-svg + a per-chart class). These
+   come after .chart-svg so they win on equal specificity. */
+.chart-bar { width: 150mm; height: auto; }
+.chart-radar { width: 132mm; height: auto; }
+.chart-timeline { width: 152mm; height: auto; }
+.chart-wheel { width: 108mm; height: auto; }
+
+/* ── Drop-cap for the opening paragraph of an interpretation section ─────── */
+/* Scoped to :first-child so sections that open with a heading/list are skipped. */
+.content > p:first-child::first-letter {
+    font-family: "Playfair Display", serif; font-size: 4.4rem; line-height: .8;
+    font-weight: 700; color: var(--gold); float: left;
+    padding: .4rem .8rem 0 0;
+}
 
 /* ── Footer note ────────────────────────────────────────────────────────── */
 .footnote { margin-top: 2.6rem; text-align: center; }

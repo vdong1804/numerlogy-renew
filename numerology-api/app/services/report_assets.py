@@ -33,3 +33,14 @@ def cover_fallback() -> str | None:
     """Relative path to the default (static) cover background art, else None."""
     rel = "static/report-assets/cover/cover-fallback.jpg"
     return rel if (_ROOT / rel).exists() else None
+
+
+def ornament(name: str) -> str | None:
+    """Relative path to a decorative SVG ornament, else None if absent.
+
+    Mirrors archetype_image/cover_fallback: templates degrade gracefully (skip
+    the ornament) when the asset file is missing. `name` excludes the extension
+    (e.g. "corner-flourish" → static/report-assets/ornaments/corner-flourish.svg).
+    """
+    rel = f"static/report-assets/ornaments/{name}.svg"
+    return rel if (_ROOT / rel).exists() else None

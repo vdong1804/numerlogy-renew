@@ -47,6 +47,9 @@
     {{ m.birth_chart_svg(report.chart_grid) }}
 </section>
 
+{# ── Biểu đồ vũ trụ (4 chart) ─────────────────────────────────────────── #}
+{{ m.chart_pages(report.charts) }}
+
 {# ── Teaser sections (subset) ────────────────────────────────────────── #}
 {% for sec in report.sections %}
 {% if sec.heading.startswith('SỐ CHỦ ĐẠO') or sec.heading.startswith('SỐ SỨ MỆNH') or sec.heading.startswith('SỐ LINH HỒN') or sec.heading.startswith('SỐ ĐIỆN THOẠI') %}

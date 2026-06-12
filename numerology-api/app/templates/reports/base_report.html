@@ -29,6 +29,9 @@
     </div>
 </section>
 
+{# ── Biểu đồ vũ trụ (4 chart) ─────────────────────────────────────────── #}
+{% block charts %}{{ m.chart_pages(charts) }}{% endblock %}
+
 {# ── Nội dung diễn giải ──────────────────────────────────────────────── #}
 <section class="new-page section">
     {% block content %}{% endblock %}

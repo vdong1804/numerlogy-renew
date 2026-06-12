@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" viewBox="0 0 240 240">
+  <!-- Flower-of-life motif: 1 centre + 6 petal circles, faint gold. -->
+  <g fill="none" stroke="#c9a227" stroke-width="1" opacity="0.5">
+    <circle cx="120" cy="120" r="40"/>
+    <circle cx="120" cy="80" r="40"/>
+    <circle cx="120" cy="160" r="40"/>
+    <circle cx="154.6" cy="100" r="40"/>
+    <circle cx="154.6" cy="140" r="40"/>
+    <circle cx="85.4" cy="100" r="40"/>
+    <circle cx="85.4" cy="140" r="40"/>
+    <circle cx="120" cy="120" r="80"/>
+  </g>
+</svg>

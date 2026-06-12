@@ -16,10 +16,12 @@ from collections import Counter
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.numerology import calculate_numerology_numbers, get_sum
+from app.services.report_charts import build_charts
 from app.db.models.numerology_content import (
     AttitudeNumber, BirthdayChart, BirthdayNumber, ChallengeLife,
-    DevelopmentNumber, GrowthNumber, Identifiable, KarmicNumber, LifePeak,
-    MainNumber, MatureNumber, MissNumber, MissionNumber, PersonalMonthNumber,
+    DevelopmentNumber, GrowthNumber, Identifiable, KarmicDebtNumber,
+    KarmicNumber, LifePeak, MainNumber, MatureNumber, MissNumber,
+    MissionNumber, NameChart, PersonalMonthNumber, PersonalYearNumber,
     PhoneNumber, SoulsNumber, StagesOfLife,
 )
 from app.services.numerology_db import fetch_by_code
@@ -58,7 +60,7 @@ async def build_report_view(
             if extra:
                 main_html += extra
     sections.append({
-        "heading": f"SỐ CHỦ ĐẠO {calc['so_chu_dao']}",
+        "heading": f"SỐ CHỦ ĐẠO {calc['so_chu_dao_compound']}",
         "title": main.title if main else "", "content": main_html,
     })
 
@@ -73,6 +75,35 @@ async def build_report_view(
         chart_sections.append({
             "heading": f"Số {d} trong biểu đồ ngày sinh (×{present[d]})",
             "content": html,
+        })
+
+    # 2b. Mũi tên (mạnh/trống) + số lẻ loi (G4/G5) — nối vào chart_sections
+    for code in calc["arrows_present"]:
+        r = await row(BirthdayChart, code)
+        if r:
+            chart_sections.append({"heading": r.title or f"Mũi tên {code}", "content": r.content})
+    for code in calc["arrows_empty"]:  # code đã có tiền tố not_
+        r = await row(BirthdayChart, code)
+        if r:
+            chart_sections.append({"heading": r.title or f"Mũi tên trống {code}", "content": r.content})
+    for d in calc["isolated"]:
+        r = await row(BirthdayChart, f"{d}_single")
+        if r:
+            chart_sections.append({"heading": r.title or f"Số {d} lẻ loi", "content": r.content})
+
+    # 2c. Biểu đồ Tên + Tổng hợp (G3) — ô = chữ số lặp theo số lần xuất hiện
+    # (cùng quy ước string-repeat với chart_grid, vd "33" = số 3 xuất hiện 2 lần).
+    name_counts = calc["name_counts"]
+    chart_grid_name = [[d * name_counts[d] for d in r] for r in _CHART_LAYOUT]
+    chart_grid_combined = [
+        [d * (present[d] + name_counts[d]) for d in r] for r in _CHART_LAYOUT
+    ]
+    name_chart_sections: list[dict] = []
+    for d in sorted(c for c in name_counts if name_counts[c]):
+        nr = await row(NameChart, d)
+        name_chart_sections.append({
+            "heading": f"Số {d} trong biểu đồ tên (×{name_counts[d]})",
+            "content": nr.content if nr else "",
         })
 
     # 3. Ba giai đoạn
@@ -101,20 +132,27 @@ async def build_report_view(
     await add(f"SỐ TRƯỞNG THÀNH {calc['so_truong_thanh']}", DevelopmentNumber, calc["so_truong_thanh"])
     await add(f"SỐ PHÁT TRIỂN {calc['so_phat_trien']}", GrowthNumber, calc["so_phat_trien"])
     await add(f"SỐ NỘI CẢM {calc['so_noi_cam']}", KarmicNumber, calc["so_noi_cam"])
+    # Số Nợ Nghiệp (G1) — chỉ render khi có; hiển thị dạng kép code/single
+    for code in calc["no_nghiep"]:
+        await add(f"SỐ NỢ NGHIỆP {code}/{get_sum(code)}", KarmicDebtNumber, code)
     for miss in calc["leak_num"]:
         await add(f"SỐ THIẾU {miss}", MissNumber, miss)
     await add(f"THỂ NHÂN DẠNG {calc['the_nhan_dang']}", Identifiable, calc["the_nhan_dang"])
     phone_code = get_sum(sum(int(c) for c in phone if c.isdigit())) if phone else 0
     if phone_code:
         await add(f"SỐ ĐIỆN THOẠI {phone_code}", PhoneNumber, phone_code)
+    await add(f"SỐ NĂM CÁ NHÂN {calc['so_nam_ca_nhan']}", PersonalYearNumber, calc["so_nam_ca_nhan"])
     await add(f"SỐ THÁNG CÁ NHÂN {calc['so_thang_ca_nhan']}", PersonalMonthNumber, calc["so_thang_ca_nhan"])
 
     summary = [
-        ("Số chủ đạo", calc["so_chu_dao"]), ("Số thái độ", calc["so_thai_do"]),
+        ("Số chủ đạo", calc["so_chu_dao_compound"]), ("Số thái độ", calc["so_thai_do"]),
         ("Số sứ mệnh", calc["so_su_menh"]), ("Số linh hồn", calc["so_linh_hon"]),
         ("Số nhân cách", calc["so_nhan_cach"]), ("Số trưởng thành", calc["so_truong_thanh"]),
         ("Số phát triển", calc["so_phat_trien"]), ("Số nội cảm", calc["so_noi_cam"]),
-        ("Thể nhân dạng", calc["the_nhan_dang"]), ("Số tháng cá nhân", calc["so_thang_ca_nhan"]),
+        ("Số nợ nghiệp", ", ".join(f"{c}/{get_sum(c)}" for c in calc["no_nghiep"]) or "—"),
+        ("Thể nhân dạng", calc["the_nhan_dang"]),
+        ("Số năm cá nhân", calc["so_nam_ca_nhan"]),
+        ("Số tháng cá nhân", calc["so_thang_ca_nhan"]),
         ("Số thiếu", ", ".join(map(str, calc["leak_num"])) or "—"),
     ]
 
@@ -130,6 +168,11 @@ async def build_report_view(
         "summary": summary,
         "chart_grid": chart_grid,
         "chart_sections": chart_sections,
+        "chart_grid_name": chart_grid_name,
+        "chart_grid_combined": chart_grid_combined,
+        "name_chart_sections": name_chart_sections,
         "sections": sections,
         "calc": calc,
+        # 4 cosmic charts (power/radar/timeline/wheel) for the PDF report.
+        "charts": build_charts(calc, birth_day),
     }

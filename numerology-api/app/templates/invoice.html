@@ -50,6 +50,24 @@
     {% endfor %}
 </section>
 
+{# ── Biểu đồ tên + tổng hợp ──────────────────────────────────────────── #}
+{% if report.chart_grid_name %}
+<section class="new-page section">
+    <h1 class="section-title">Biểu đồ tên</h1>
+    <p class="section-subtitle">{{ report.header.name }}</p>
+    {{ m.birth_chart_svg(report.chart_grid_name) }}
+    {% for sec in report.name_chart_sections %}
+    <h3>{{ sec.heading }}</h3>
+    <div class="content">{{ sec.content | safe }}</div>
+    {% endfor %}
+    <h1 class="section-title">Biểu đồ tổng hợp tên &amp; ngày sinh</h1>
+    {{ m.birth_chart_svg(report.chart_grid_combined) }}
+</section>
+{% endif %}
+
+{# ── Biểu đồ vũ trụ (4 chart) ─────────────────────────────────────────── #}
+{{ m.chart_pages(report.charts) }}
+
 {# ── Các section diễn giải ───────────────────────────────────────────── #}
 {% for sec in report.sections %}
 <section class="new-page section">
