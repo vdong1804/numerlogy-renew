@@ -68,12 +68,17 @@ def detect_karmic_debt(total: int) -> int | None:
 
 
 def compound_str(total: int) -> str:
-    """Display a number as 'penultimate/single' (e.g. 13/4, 22/4); single if already 1-9."""
+    """Display số chủ đạo as 'master/single' (11/2, 22/4, 33/6); single digit otherwise.
+
+    Only master numbers 11/22/33 carry a compound form. A non-master penultimate
+    (e.g. 24 → 6, 13 → 4) reduces straight to its single digit — no '24/6'.
+    """
     n = int(total)
-    last2 = n
     while n > 9:
-        last2, n = n, sum(int(d) for d in str(n))
-    return f"{last2}/{n}" if last2 != n else str(n)
+        if n in (11, 22, 33):
+            return f"{n}/{sum(int(d) for d in str(n))}"
+        n = sum(int(d) for d in str(n))
+    return str(n)
 
 
 def derive_chart_fields(

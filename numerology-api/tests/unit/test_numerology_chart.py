@@ -64,16 +64,20 @@ class TestDetectKarmicDebt:
 
 
 class TestCompoundStr:
-    def test_two_digit_compound(self):
-        assert compound_str(13) == "13/4"
+    def test_master_numbers_show_compound(self):
+        # Only 11/22/33 carry a compound master form.
+        assert compound_str(11) == "11/2"
         assert compound_str(22) == "22/4"
+        assert compound_str(33) == "33/6"
 
     def test_single_digit_stays_single(self):
         assert compound_str(6) == "6"
 
-    def test_large_total_shows_penultimate(self):
-        # 49 → 13 → 4 : display penultimate 13/4
-        assert compound_str(49) == "13/4"
+    def test_non_master_reduces_to_single(self):
+        # 24 → 6 and 13 → 4 are NOT master numbers → single digit only.
+        assert compound_str(24) == "6"
+        assert compound_str(13) == "4"
+        assert compound_str(49) == "4"  # 49 → 13 → 4
 
 
 class TestDeriveChartFields:
