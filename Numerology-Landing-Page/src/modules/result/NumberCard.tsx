@@ -26,6 +26,9 @@ export default function NumberCard({
   compact = false,
 }: NumberCardProps) {
   const router = useRouter()
+  // Guard against a missing indicator (e.g. an API payload that omits a field)
+  // so one absent number never crashes the whole result page.
+  if (!indicator) return null
   return (
     <Box
       p={2.5}

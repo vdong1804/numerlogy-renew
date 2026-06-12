@@ -37,7 +37,7 @@ export interface PowerChart {
   name: Record<string, number>
 }
 
-/** The 9 core numbers block. */
+/** The 7 core numbers block (matches GET /api/numerology-report). */
 export interface CoreNumbers {
   su_menh: NumerologyIndicator
   linh_hon: NumerologyIndicator
@@ -45,14 +45,11 @@ export interface CoreNumbers {
   thai_do: NumerologyIndicator
   truong_thanh: NumerologyIndicator
   ngay_sinh: NumerologyIndicator
-  can_bang: NumerologyIndicator
-  thuc_thi: NumerologyIndicator
   noi_cam: NumerologyIndicator
 }
 
-/** Personal year/month cycle block. */
+/** Personal-cycle block. Only the personal month is exposed by the API. */
 export interface PersonalCycle {
-  nam_ca_nhan: NumerologyIndicator
   thang_ca_nhan: NumerologyIndicator
 }
 

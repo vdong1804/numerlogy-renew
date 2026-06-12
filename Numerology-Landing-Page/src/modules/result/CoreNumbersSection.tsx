@@ -18,12 +18,10 @@ const CORE_LABELS: Array<{ key: keyof CoreNumbers; label: string }> = [
   { key: 'thai_do', label: 'Số Thái Độ' },
   { key: 'truong_thanh', label: 'Số Trưởng Thành' },
   { key: 'ngay_sinh', label: 'Số Ngày Sinh' },
-  { key: 'can_bang', label: 'Số Cân Bằng' },
-  { key: 'thuc_thi', label: 'Số Thực Thi' },
   { key: 'noi_cam', label: 'Số Nội Cảm' },
 ]
 
-/** Responsive grid of the 9 core numbers. */
+/** Responsive grid of the 7 core numbers. */
 export default function CoreNumbersSection({
   core,
   isVip = false,
@@ -32,7 +30,7 @@ export default function CoreNumbersSection({
     <Box component="section">
       <SectionHeading
         title="Các Chỉ Số Cốt Lõi"
-        subtitle="9 con số nền tảng định hình con người bạn"
+        subtitle="7 con số nền tảng định hình con người bạn"
       />
       <Grid container spacing={2.5} mt={0}>
         {CORE_LABELS.map(({ key, label }) => (

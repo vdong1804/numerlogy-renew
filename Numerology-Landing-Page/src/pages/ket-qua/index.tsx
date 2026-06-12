@@ -51,7 +51,7 @@ const SearchResultPage: NextPageWithLayout = () => {
     () => ({
       name: customerInfo.name,
       birthday: dayjs(customerInfo.birthDay)?.format('DD/MM/YYYY') || '',
-      mainNumber: Number(report?.so_chu_dao.code) || 0,
+      mainNumber: Number(report?.so_chu_dao?.code) || 0,
       isVip: IS_VIP,
     }),
     [customerInfo, report]
@@ -84,7 +84,7 @@ const SearchResultPage: NextPageWithLayout = () => {
       <BannerSearchResultPage userInfo={userInfo} />
       <Box pt={9} pb={23}>
         <Container maxWidth={false}>
-          {report && (
+          {report?.so_chu_dao && (
             <Box sx={{ display: 'flex', flexDirection: 'column', rowGap: 6 }}>
               <MainNumberDetail indicator={report.so_chu_dao} />
               <CoreNumbersSection core={report.core_numbers} isVip={IS_VIP} />

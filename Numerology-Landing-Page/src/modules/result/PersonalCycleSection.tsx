@@ -20,16 +20,9 @@ export default function PersonalCycleSection({
     <Box component="section">
       <SectionHeading
         title="Chu Kỳ Cá Nhân"
-        subtitle="Năng lượng đang chi phối bạn trong năm và tháng hiện tại"
+        subtitle="Năng lượng đang chi phối bạn trong tháng hiện tại"
       />
       <Grid container spacing={2.5} mt={0}>
-        <Grid item xs={12} md={6}>
-          <NumberCard
-            label="Số Năm Cá Nhân"
-            indicator={personal.nam_ca_nhan}
-            isVip={isVip}
-          />
-        </Grid>
         <Grid item xs={12} md={6}>
           <NumberCard
             label="Số Tháng Cá Nhân"
