@@ -8,6 +8,7 @@
  *
  * On success the user is redirected to /check-out/[orderId].
  */
+import dayjs from 'dayjs'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import {
@@ -21,6 +22,8 @@ import {
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import type { ReactElement } from 'react'
+
+import { useStore } from '@/store/useStore'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -69,6 +72,8 @@ const ProductDetailPage: NextPageWithLayout = () => {
     phone: '',
     gender: '',
   })
+  // Carry-over: the user already entered these on the lookup flow (/ket-qua).
+  const customerInfo = useStore((state) => state.customerInfo)
 
   useEffect(() => {
     if (!slug) return
@@ -78,6 +83,29 @@ const ProductDetailPage: NextPageWithLayout = () => {
       .catch((err) => setError((err as Error).message))
       .finally(() => setLoading(false))
   }, [slug])
+
+  // Prefill the report form from the customerInfo store so the user never
+  // re-types name/birthday/phone they already provided. Runs once per product.
+  useEffect(() => {
+    if (!product || product.type !== 'report') return
+    setForm((prev) => ({
+      name: prev.name || customerInfo.name || '',
+      birth_day:
+        prev.birth_day ||
+        (customerInfo.birthDay
+          ? dayjs(customerInfo.birthDay).format('YYYY-MM-DD')
+          : ''),
+      phone: prev.phone || customerInfo.phoneNumber || '',
+      gender:
+        prev.gender ||
+        (customerInfo.sex === 'F'
+          ? 'female'
+          : customerInfo.sex === 'M'
+          ? 'male'
+          : ''),
+    }))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [product])
 
   const handleBuy = async () => {
     if (!product) return

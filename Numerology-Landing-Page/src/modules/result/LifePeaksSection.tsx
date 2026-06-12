@@ -7,14 +7,10 @@ import SectionHeading from './parts/SectionHeading'
 
 export interface LifePeaksSectionProps {
   peaks: LifePeak[]
-  isVip?: boolean
 }
 
 /** The 4 life peaks rendered as a timeline of cards (labelled by stage + age). */
-export default function LifePeaksSection({
-  peaks,
-  isVip = false,
-}: LifePeaksSectionProps) {
+export default function LifePeaksSection({ peaks }: LifePeaksSectionProps) {
   if (!peaks?.length) return null
   return (
     <Box component="section">
@@ -28,7 +24,6 @@ export default function LifePeaksSection({
             <NumberCard
               label={`Đỉnh cao ${peak.stage} — từ ${peak.age_start} tuổi`}
               indicator={peak}
-              isVip={isVip}
               compact
             />
           </Grid>

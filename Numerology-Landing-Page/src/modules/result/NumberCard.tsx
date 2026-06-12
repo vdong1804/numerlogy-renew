@@ -1,16 +1,14 @@
 import { Box, Typography } from '@mui/material'
-import { useRouter } from 'next/router'
 
 import type { NumerologyIndicator } from '@/models'
 
 import IndicatorHtml from './parts/IndicatorHtml'
+import LockOverlay from './parts/LockOverlay'
 
 export interface NumberCardProps {
   /** Vietnamese display label, e.g. "Số Sứ Mệnh". */
   label: string
   indicator: NumerologyIndicator
-  /** Free users: blur + show upsell hint over the interpretation. */
-  isVip?: boolean
   /** Smaller variant used inside dense grids. */
   compact?: boolean
 }
@@ -18,14 +16,15 @@ export interface NumberCardProps {
 /**
  * Compact, reusable card: big glowing number + label + interpretation.
  * Works for any indicator (core numbers, peaks, challenges, personal cycle).
+ *
+ * Gating is server-driven: when `indicator.locked` the backend has stripped the
+ * interpretation, so we render a real lock overlay (not a CSS blur over content).
  */
 export default function NumberCard({
   label,
   indicator,
-  isVip = false,
   compact = false,
 }: NumberCardProps) {
-  const router = useRouter()
   // Guard against a missing indicator (e.g. an API payload that omits a field)
   // so one absent number never crashes the whole result page.
   if (!indicator) return null
@@ -70,38 +69,10 @@ export default function NumberCard({
         </Typography>
       </Box>
 
-      <Box
-        sx={{
-          position: 'relative',
-          ...(isVip
-            ? {}
-            : {
-                maxHeight: 160,
-                overflow: 'hidden',
-                maskImage:
-                  'linear-gradient(to bottom, #000 55%, transparent 100%)',
-                WebkitMaskImage:
-                  'linear-gradient(to bottom, #000 55%, transparent 100%)',
-              }),
-        }}
-      >
+      {indicator.locked ? (
+        <LockOverlay hint={`Luận giải ${label} dành cho báo cáo đầy đủ`} />
+      ) : (
         <IndicatorHtml html={indicator.content} sx={{ fontStyle: 'italic' }} />
-      </Box>
-
-      {!isVip && indicator.content && (
-        <Typography
-          component="span"
-          onClick={() => router.push('/shop')}
-          sx={{
-            fontSize: '0.8125rem',
-            fontWeight: 600,
-            color: 'var(--text-main)',
-            cursor: 'pointer',
-            '&:hover': { textDecoration: 'underline' },
-          }}
-        >
-          Nâng cấp VIP để xem đầy đủ luận giải →
-        </Typography>
       )}
     </Box>
   )

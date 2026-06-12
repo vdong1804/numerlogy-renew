@@ -7,13 +7,11 @@ import SectionHeading from './parts/SectionHeading'
 
 export interface ChallengesSectionProps {
   challenges: Challenge[]
-  isVip?: boolean
 }
 
 /** The 4 life challenges rendered as cards, labelled by stage. */
 export default function ChallengesSection({
   challenges,
-  isVip = false,
 }: ChallengesSectionProps) {
   if (!challenges?.length) return null
   return (
@@ -28,7 +26,6 @@ export default function ChallengesSection({
             <NumberCard
               label={`Thử thách ${challenge.stage}`}
               indicator={challenge}
-              isVip={isVip}
               compact
             />
           </Grid>

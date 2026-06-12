@@ -78,6 +78,38 @@ async def get_current_user(
     return user
 
 
+async def get_current_user_optional(
+    db: AsyncSession = Depends(get_db),
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(oauth2_scheme),
+) -> Optional[User]:
+    """Like get_current_user but never raises — returns None on any auth issue.
+
+    For public endpoints that personalize when a valid token is present (e.g. the
+    /numerology-report entitlement check) but must still serve anonymous callers.
+    An invalid/expired token is treated exactly like no token (anonymous).
+    """
+    if credentials is None:
+        return None
+    try:
+        payload = decode_token(credentials.credentials)
+    except JWTError:
+        return None
+    if payload.get("type") != "access":
+        return None
+    user_id_str: Optional[str] = payload.get("sub")
+    if not user_id_str:
+        return None
+    try:
+        user_id = int(user_id_str)
+    except ValueError:
+        return None
+    result = await db.execute(select(User).where(User.id == user_id))
+    user = result.scalar_one_or_none()
+    if user is None or not user.is_active:
+        return None
+    return user
+
+
 async def get_current_superuser(user: User = Depends(get_current_user)) -> User:
     """Require authenticated user to have is_superuser=True.
 

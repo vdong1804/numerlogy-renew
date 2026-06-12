@@ -13,18 +13,19 @@ import {
   BannerSearchResultPage,
   ChallengesSection,
   CoreNumbersSection,
+  KarmicDebtSection,
   LifePeaksSection,
   MainNumberDetail,
   PersonalCycleSection,
   PowerChartSection,
 } from '@/modules/result'
+import { downloadReportBlob } from '@/lib/my-account-api'
 import { BoxExportPDF } from '@/modules/result/parts'
+import StickyPurchaseBar from '@/modules/result/parts/StickyPurchaseBar'
 import { useStore } from '@/store/useStore'
 
 import type { MainstreamNumberParams } from '../api/numerologyApi'
 import numerologyApi from '../api/numerologyApi'
-
-const IS_VIP = false
 
 const SearchResultPage: NextPageWithLayout = () => {
   const [isLoadingPDF, setIsLoadingPDF] = useState(false)
@@ -46,28 +47,40 @@ const SearchResultPage: NextPageWithLayout = () => {
     () => numerologyApi.getNumerologyReport(params)
   )
   const report = reportRes?.data
+  // Entitlement is server-driven: "paid" only when the logged-in user owns a
+  // matching paid order. Anonymous/free viewers see locked sections as teasers.
+  const isPaid = reportRes?.tier === 'paid'
 
   const userInfo = useMemo(
     () => ({
       name: customerInfo.name,
       birthday: dayjs(customerInfo.birthDay)?.format('DD/MM/YYYY') || '',
       mainNumber: Number(report?.so_chu_dao?.code) || 0,
-      isVip: IS_VIP,
+      isVip: isPaid,
     }),
-    [customerInfo, report]
+    [customerInfo, report, isPaid]
   )
 
   const handleDownloadPDF = async () => {
     setIsLoadingPDF(true)
     try {
-      const response = await numerologyApi.getMainstreamPDF(params)
-      const blob = new Blob([response], { type: 'application/pdf' })
+      // Paid → the full fulfilled report (owner-only). Free → the reduced
+      // invoice-free PDF (public). The legacy /api/so-hoc quota path is gone.
+      let blob: Blob
+      if (isPaid && reportRes?.report_download_id) {
+        blob = await downloadReportBlob(reportRes.report_download_id)
+      } else {
+        const buffer = await numerologyApi.getFreePDF(params)
+        blob = new Blob([buffer], { type: 'application/pdf' })
+      }
       const fileURL = URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = fileURL
       link.setAttribute('download', `${customerInfo.name.split(' ').join('_')}.pdf`)
       document.body.appendChild(link)
       link.click()
+      link.remove()
+      URL.revokeObjectURL(fileURL)
     } catch (error) {
       // eslint-disable-next-line no-console
       console.log(error)
@@ -87,20 +100,22 @@ const SearchResultPage: NextPageWithLayout = () => {
           {report?.so_chu_dao && (
             <Box sx={{ display: 'flex', flexDirection: 'column', rowGap: 6 }}>
               <MainNumberDetail indicator={report.so_chu_dao} />
-              <CoreNumbersSection core={report.core_numbers} isVip={IS_VIP} />
-              <LifePeaksSection peaks={report.peaks} isVip={IS_VIP} />
-              <ChallengesSection challenges={report.challenges} isVip={IS_VIP} />
-              <PersonalCycleSection personal={report.personal} isVip={IS_VIP} />
+              <CoreNumbersSection core={report.core_numbers} />
+              <LifePeaksSection peaks={report.peaks} />
+              <ChallengesSection challenges={report.challenges} />
+              <KarmicDebtSection karmicDebt={report.karmic_debt} />
+              <PersonalCycleSection personal={report.personal} />
               <PowerChartSection
                 powerChart={report.power_chart}
                 missingNumbers={report.missing_numbers}
-                isVip={IS_VIP}
               />
-              <BoxExportPDF onClick={handleDownloadPDF} />
+              <BoxExportPDF isPaid={isPaid} onClick={handleDownloadPDF} />
             </Box>
           )}
         </Container>
       </Box>
+      {/* Free viewers get a sticky deep-link to unlock the full report. */}
+      {report && !isPaid && <StickyPurchaseBar />}
     </Box>
   )
 }

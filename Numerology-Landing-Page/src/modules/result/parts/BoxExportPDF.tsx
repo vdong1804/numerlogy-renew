@@ -3,10 +3,13 @@ import { Box, Button, Typography } from '@mui/material'
 import { IconPDF } from '@/components/icon'
 
 export interface BoxExportPDFProps {
+  /** Paid viewers download the full fulfilled report; free get the reduced PDF. */
+  isPaid?: boolean
   onClick?: () => void
 }
 
 export default function BoxExportPDF({
+  isPaid = false,
   onClick = () => {},
 }: BoxExportPDFProps) {
   return (
@@ -28,12 +31,13 @@ export default function BoxExportPDF({
           variant="h3"
           className="font-philosopher"
         >
-          File báo cáo thần số sọc của bạn
+          File báo cáo thần số học của bạn
         </Typography>
       </Box>
       <Typography color="common.black" fontStyle={'italic'} maxWidth={440}>
-        Bằng cách nâng cấp VIP, bạn có thể tải về file tổng hợp thần số học của
-        bạn để sử dụng lâu dài.
+        {isPaid
+          ? 'Tải về file báo cáo đầy đủ của bạn để sử dụng lâu dài.'
+          : 'Tải bản tóm tắt miễn phí. Mở khóa báo cáo đầy đủ để nhận file chi tiết toàn bộ chỉ số.'}
       </Typography>
 
       <Box
@@ -49,7 +53,7 @@ export default function BoxExportPDF({
         }}
       >
         <Button onClick={onClick} variant="contained">
-          Download
+          {isPaid ? 'Tải báo cáo đầy đủ' : 'Tải bản tóm tắt'}
         </Button>
       </Box>
     </Box>

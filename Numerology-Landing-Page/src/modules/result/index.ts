@@ -1,6 +1,7 @@
 import BannerSearchResultPage from './BannerSearchResultPage'
 import ChallengesSection from './ChallengesSection'
 import CoreNumbersSection from './CoreNumbersSection'
+import KarmicDebtSection from './KarmicDebtSection'
 import LifePeaksSection from './LifePeaksSection'
 import MainNumberDetail from './MainNumberDetail'
 import NumberCard from './NumberCard'
@@ -11,6 +12,7 @@ export {
   BannerSearchResultPage,
   ChallengesSection,
   CoreNumbersSection,
+  KarmicDebtSection,
   LifePeaksSection,
   MainNumberDetail,
   NumberCard,

@@ -7,7 +7,6 @@ import SectionHeading from './parts/SectionHeading'
 
 export interface CoreNumbersSectionProps {
   core: CoreNumbers
-  isVip?: boolean
 }
 
 /** Ordered map of core-number keys → Vietnamese labels. */
@@ -22,10 +21,7 @@ const CORE_LABELS: Array<{ key: keyof CoreNumbers; label: string }> = [
 ]
 
 /** Responsive grid of the 7 core numbers. */
-export default function CoreNumbersSection({
-  core,
-  isVip = false,
-}: CoreNumbersSectionProps) {
+export default function CoreNumbersSection({ core }: CoreNumbersSectionProps) {
   return (
     <Box component="section">
       <SectionHeading
@@ -35,12 +31,7 @@ export default function CoreNumbersSection({
       <Grid container spacing={2.5} mt={0}>
         {CORE_LABELS.map(({ key, label }) => (
           <Grid key={key} item xs={12} sm={6} md={4}>
-            <NumberCard
-              label={label}
-              indicator={core[key]}
-              isVip={isVip}
-              compact
-            />
+            <NumberCard label={label} indicator={core[key]} compact />
           </Grid>
         ))}
       </Grid>

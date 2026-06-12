@@ -9,7 +9,6 @@ import SectionHeading from './parts/SectionHeading'
 export interface PowerChartSectionProps {
   powerChart: PowerChart
   missingNumbers: NumerologyIndicator[]
-  isVip?: boolean
 }
 
 /**
@@ -19,7 +18,6 @@ export interface PowerChartSectionProps {
 export default function PowerChartSection({
   powerChart,
   missingNumbers,
-  isVip = false,
 }: PowerChartSectionProps) {
   return (
     <Box component="section">
@@ -53,12 +51,7 @@ export default function PowerChartSection({
           <Grid container spacing={2.5} mt={0}>
             {missingNumbers.map((item) => (
               <Grid key={item.code} item xs={12} sm={6} md={4} lg={3}>
-                <NumberCard
-                  label="Số còn thiếu"
-                  indicator={item}
-                  isVip={isVip}
-                  compact
-                />
+                <NumberCard label="Số còn thiếu" indicator={item} compact />
               </Grid>
             ))}
           </Grid>

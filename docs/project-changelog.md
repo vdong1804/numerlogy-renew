@@ -5,6 +5,57 @@
 
 ---
 
+## [2026-06-12] — /ket-qua Flow Redesign: Entitlement Gating + PDF Unification
+
+**Scope:** Fix the result screen (`/ket-qua`) flow for content display, packages (upsell) and PDF download. Entitlement is now server-driven (no hardcoded `IS_VIP`), locked content never ships to the client, upsell is carry-over aware, and PDF download uses the fulfillment templates instead of the legacy quota endpoint. Branch `feat/numerology-report-gaps`. Plan: `plans/260612-1501-ket-qua-flow-redesign/`.
+
+### Backend
+- **Entitlement service (new):** `app/services/report_entitlement_service.py` — `resolve_entitlement(db, user, full_name, birth_day)` returns `(tier, unlocked_sections, matched_order_id)`. Coarse v1: a logged-in user with a **paid** report/combo order whose `meta` identity (accent/case-insensitive name + birth_day digits) matches → tier `paid` (ALL_SECTIONS); otherwise `free` (FREE_SECTIONS = số chủ đạo + power chart + chu kỳ cá nhân). `find_order_report_download_id` maps a paid order → its fulfilled UserReport PDF id.
+- **Optional auth dep:** `app/deps.py` `get_current_user_optional` — never raises; invalid/missing token → anonymous (free).
+- **Server-side content stripping:** `numerology_report_builder.build_report(..., unlocked)` nulls `content` for locked sections and flags `locked: true` (`extra_locked` for the hero's content_2..5). Paid interpretations never leave the server for free viewers (was: full HTML shipped + CSS-blurred client-side).
+- **Endpoint:** `GET /api/numerology-report` now optional-auth; response adds `tier`, `unlocked[]`, `matched_order_id`, `report_download_id`.
+
+### Frontend
+- **Data-driven gating:** removed hardcoded `IS_VIP`; `NumberCard` renders a real `LockOverlay` (new) from `indicator.locked` instead of a CSS blur. `isVip` prop removed from all 6 result sections. `axiosClient` already attaches the Bearer token → backend resolves entitlement automatically.
+- **Unified upsell + carry-over:** `StickyPurchaseBar` (new) deep-links free viewers to the suggested report product; `/shop/[slug]` prefills the report form from the `customerInfo` store (no re-typing name/birthday/phone/gender).
+- **PDF flow:** `/ket-qua` no longer calls the paid-quota `/api/so-hoc`. Free → `/api/so-hoc-free` (invoice-free reduced PDF); paid → `downloadReportBlob` (`/api/my/reports/{id}/download`). `BoxExportPDF` copy is tier-aware; fixed typo "thần số sọc" → "thần số học".
+
+### Tests
+- `tests/services/test_report_entitlement_service.py` (13 cases), gating cases in `test_numerology_report_builder.py`, `tests/integration/test_numerology_report_entitlement.py` (free / invalid-token / paid). 38 related tests pass (incl. existing numerology endpoints — no regression).
+
+### Breaking Changes
+- None for anonymous users. Free `/ket-qua` PDF now served by `/api/so-hoc-free` (public) instead of `/api/so-hoc` (which required auth+quota and was effectively broken for free viewers).
+
+---
+
+## [2026-06-12] — PDF "Cosmic" Redesign + 4 Charts (Numerology Report)
+
+**Scope:** Upgrade numerology PDF reports with a mystical "cosmic" aesthetic + 4 server-rendered SVG charts. Applies to all report templates via both render paths. Stack: Jinja2 + WeasyPrint (no JS) → charts = inline SVG built in Python. Branch `feat/numerology-report-gaps`.
+
+### Backend
+- **Chart engine (new):** `app/services/report_charts.py` (pure, no I/O) — `power_bar_svg` (digit frequency 1-9), `core_radar_svg` (6 core numbers, master 11/22/33 capped to radial 1-9 with label preserved), `peaks_timeline_svg` (4 life-peak nodes), `cycle_wheel_svg` (9-year donut, current year highlighted), `build_charts(calc, birth_day)` orchestrator. Palette/geometry helpers split into `app/services/report_charts_geometry.py` to keep the engine ≤200 LOC.
+- **Fail-safe by design:** `build_charts` wraps each chart in its own try/except → never raises. Missing calc keys → that chart = `None`; templates guard `{% if charts %}` / `{% if svg %}`.
+- **Render path wiring:** `build_report_view` (direct route — invoice*.html) now returns `charts`. `fulfillment_service._render_report_pdf` adds guarded `_resolve_charts(input_payload)` (computes calc from name+birth_day, never blocks fulfillment) → covers `reports/report-{overview,love,career,mini}.html`.
+- **Ornaments:** `report_assets.ornament(name)` helper + `static/report-assets/ornaments/{corner-flourish,sacred-geometry-watermark}.svg`.
+
+### Templates / Theme
+- **Macros:** `_macros.html` — `chart_block(title, subtitle, svg)` + `chart_pages(charts)` (DRY, shared by base_report + invoice*); `divider()` upgraded to inline SVG motif.
+- **base_report.html:** `{% block charts %}{{ m.chart_pages(charts) }}{% endblock %}` after cover.
+- **invoice.html / invoice-free.html:** `{{ m.chart_pages(report.charts) }}` alongside existing birth/name charts.
+- **_theme.css:** `@page chart` (dark navy + starfield data-URI), gold glow halo on `.number-badge` (radial-gradient, NOT filter:blur), drop-cap `::first-letter`, faint star watermark on cream pages, chart sizing classes, ornament backgrounds.
+
+### Tests / QA
+- `tests/services/test_report_charts.py` (12 cases) + `test_report_assets.py` — all pass. Suite: 334 pass (1 unrelated pre-existing failure: chat `test_llm_service` DEEPSEEK_API_KEY env test).
+- Render QA: all 6 templates → PDF without WeasyPrint errors; Gemini visual QA confirmed 4 charts legible + not clipped (fixed radar viewBox 360→420 for long left-side labels). `charts=None` omits charts without crashing. Code review: SHIP-READY (0 critical/major).
+
+### Breaking Changes
+- None. Purely additive to report rendering; missing input degrades gracefully (no charts, no crash).
+
+### Free-tier
+- Free report (`invoice-free.html`) shows only **power + 9-year cycle** charts; radar (core energy) + peaks timeline reserved for the paid report → aligns with the upsell CTA.
+
+---
+
 ## [2026-06-01] — DeepSeek LLM Migration (Chat Service)
 
 **Scope:** Migrate chat LLM from Gemini (flash/pro) to DeepSeek (`deepseek-chat`) via OpenAI-compatible SDK. Embeddings remain on Gemini `text-embedding-004`. Prompt caching removed (DeepSeek handles server-side cache). Config simplified; env-vars renamed.

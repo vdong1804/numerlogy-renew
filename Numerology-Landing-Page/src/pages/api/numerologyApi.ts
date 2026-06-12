@@ -2,7 +2,7 @@ import type {
   MainstreamNumber,
   News,
   NewsListResponse,
-  NumerologyReport,
+  NumerologyReportResponse,
   ResultResponse,
 } from '@/models'
 
@@ -29,12 +29,13 @@ const numerologyApi = {
     return response.data
   },
   // Full data-driven report (single-page summary). Backend: GET /api/numerology-report.
+  // axiosClient auto-attaches the Bearer token (if logged in) so the backend can
+  // resolve entitlement and unlock paid sections; anonymous callers get the free tier.
   async getNumerologyReport(params: MainstreamNumberParams) {
     const url = '/api/numerology-report'
-    const response = await axiosClient.get<ResultResponse<NumerologyReport>>(
-      url,
-      { params }
-    )
+    const response = await axiosClient.get<NumerologyReportResponse>(url, {
+      params,
+    })
     return response.data
   },
   async getMainstreamPDF(params: MainstreamNumberParams) {
@@ -48,6 +49,18 @@ const numerologyApi = {
       params,
       responseType: 'arraybuffer',
       ...config,
+    })
+    return response.data
+  },
+  // Free reduced PDF (invoice-free template) — public, no auth/quota required.
+  // Used by /ket-qua free tier; the full PDF for paid users comes from the
+  // fulfilled UserReport (GET /api/my/reports/{id}/download).
+  async getFreePDF(params: MainstreamNumberParams) {
+    const url = '/api/so-hoc-free'
+    const response = await axiosClient.get(url, {
+      params,
+      responseType: 'arraybuffer',
+      headers: { 'Content-Type': 'application/pdf' },
     })
     return response.data
   },
