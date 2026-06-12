@@ -26,18 +26,6 @@
     </div>
 </section>
 
-{# ── Số chủ đạo (đưa lên đầu — chỉ số quan trọng nhất) ────────────────── #}
-{% for sec in report.sections if sec.heading.startswith('SỐ CHỦ ĐẠO') %}
-<section class="new-page section">
-    <h1 class="section-title">{{ sec.heading }}</h1>
-    {% if sec.title %}<p class="section-subtitle">{{ sec.title }}</p>{% endif %}
-    <div class="number-badge">{{ sec.heading.split() | last }}</div>
-    {% if report.archetype_image %}<div class="archetype"><img src="{{ report.archetype_image }}" alt=""/></div>{% endif %}
-    {{ m.divider() }}
-    {% if sec.content %}<div class="content">{{ sec.content | safe }}</div>{% endif %}
-</section>
-{% endfor %}
-
 {# ── Tổng quan ───────────────────────────────────────────────────────── #}
 <section class="new-page section">
     <h1 class="section-title">Tổng quan các chỉ số</h1>
@@ -51,6 +39,18 @@
         {% endfor %}
     </div>
 </section>
+
+{# ── Số chủ đạo (đặt ngay dưới Tổng quan — chỉ số quan trọng nhất) ─────── #}
+{% for sec in report.sections if sec.heading.startswith('SỐ CHỦ ĐẠO') %}
+<section class="new-page section">
+    <h1 class="section-title">{{ sec.heading }}</h1>
+    {% if sec.title %}<p class="section-subtitle">{{ sec.title }}</p>{% endif %}
+    <div class="number-badge">{{ sec.heading.split() | last }}</div>
+    {% if report.archetype_image %}<div class="archetype"><img src="{{ report.archetype_image }}" alt=""/></div>{% endif %}
+    {{ m.divider() }}
+    {% if sec.content %}<div class="content">{{ sec.content | safe }}</div>{% endif %}
+</section>
+{% endfor %}
 
 {# ── Biểu đồ ngày sinh ───────────────────────────────────────────────── #}
 <section class="new-page section">
