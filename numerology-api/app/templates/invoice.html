@@ -25,6 +25,21 @@
     </div>
 </section>
 
+{# ── Số chủ đạo (đưa lên đầu — chỉ số quan trọng nhất) ────────────────── #}
+{% if report.sections %}
+{% set main = report.sections[0] %}
+<section class="new-page section">
+    <h1 class="section-title">{{ main.heading }}</h1>
+    {% if main.title %}<p class="section-subtitle">{{ main.title }}</p>{% endif %}
+    <div class="number-badge">{{ main.heading.split() | last }}</div>
+    {% if report.archetype_image %}<div class="archetype"><img src="{{ report.archetype_image }}" alt=""/></div>{% endif %}
+    {{ m.divider() }}
+    {% if main.content %}
+    <div class="content">{{ main.content | safe }}</div>
+    {% else %}<p class="muted">(Chưa có nội dung diễn giải.)</p>{% endif %}
+</section>
+{% endif %}
+
 {# ── Tổng quan ───────────────────────────────────────────────────────── #}
 <section class="new-page section">
     <h1 class="section-title">Tổng quan các chỉ số</h1>
@@ -68,15 +83,11 @@
 {# ── Biểu đồ vũ trụ (4 chart) ─────────────────────────────────────────── #}
 {{ m.chart_pages(report.charts) }}
 
-{# ── Các section diễn giải ───────────────────────────────────────────── #}
-{% for sec in report.sections %}
+{# ── Các section diễn giải còn lại (số chủ đạo đã render ở đầu) ────────── #}
+{% for sec in report.sections[1:] %}
 <section class="new-page section">
     <h1 class="section-title">{{ sec.heading }}</h1>
     {% if sec.title %}<p class="section-subtitle">{{ sec.title }}</p>{% endif %}
-    {% if loop.first %}
-    <div class="number-badge">{{ sec.heading.split() | last }}</div>
-    {% if report.archetype_image %}<div class="archetype"><img src="{{ report.archetype_image }}" alt=""/></div>{% endif %}
-    {% endif %}
     {{ m.divider() }}
     {% if sec.content %}
     <div class="content">{{ sec.content | safe }}</div>
