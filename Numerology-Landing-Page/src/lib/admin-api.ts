@@ -1,25 +1,46 @@
 /**
  * Admin API fetch wrapper
- * Adds Bearer token, handles 401, provides typed helpers
+ * Adds Bearer token, handles 401 (with refresh-and-retry), provides typed helpers
  */
+
+import { createSingleFlightRefresh } from './token-refresh'
 
 const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE ?? 'http://localhost:8000'
 
 const TOKEN_KEY = 'admin_access_token'
+const REFRESH_TOKEN_KEY = 'admin_refresh_token'
 
 function getToken(): string | null {
   if (typeof window === 'undefined') return null
   return localStorage.getItem(TOKEN_KEY)
 }
 
+function getRefreshToken(): string | null {
+  if (typeof window === 'undefined') return null
+  return localStorage.getItem(REFRESH_TOKEN_KEY)
+}
+
 export function setAdminToken(token: string): void {
   localStorage.setItem(TOKEN_KEY, token)
 }
 
+/** Store the access + refresh pair returned by /auth/login. */
+export function setAdminTokens(access: string, refresh: string): void {
+  localStorage.setItem(TOKEN_KEY, access)
+  localStorage.setItem(REFRESH_TOKEN_KEY, refresh)
+}
+
 export function clearAdminToken(): void {
   localStorage.removeItem(TOKEN_KEY)
+  localStorage.removeItem(REFRESH_TOKEN_KEY)
 }
+
+// Admin refresher — tokens live in localStorage (single-flight, shared rotation).
+const tryRefreshAdminTokens = createSingleFlightRefresh({
+  getRefreshToken,
+  storeTokens: setAdminTokens,
+})
 
 function handleUnauthorized(): void {
   clearAdminToken()
@@ -28,7 +49,8 @@ function handleUnauthorized(): void {
 
 export async function adminFetch(
   path: string,
-  init: RequestInit = {}
+  init: RequestInit = {},
+  retried = false
 ): Promise<Response> {
   const token = getToken()
   const headers: HeadersInit = {
@@ -39,6 +61,11 @@ export async function adminFetch(
   const res = await fetch(`${API_BASE}${path}`, { ...init, headers })
 
   if (res.status === 401) {
+    // Access token likely expired — try a one-time refresh, then replay once.
+    if (!retried && !path.startsWith('/auth/refresh') && getRefreshToken()) {
+      const refreshed = await tryRefreshAdminTokens()
+      if (refreshed) return adminFetch(path, init, true)
+    }
     handleUnauthorized()
     throw new Error('Unauthorized')
   }
@@ -114,7 +141,10 @@ export async function del<T = unknown>(path: string): Promise<T> {
   return res.json() as Promise<T>
 }
 
-export async function uploadFile(file: File): Promise<{ url: string }> {
+export async function uploadFile(
+  file: File,
+  retried = false
+): Promise<{ url: string }> {
   const formData = new FormData()
   formData.append('file', file)
   const token = getToken()
@@ -124,6 +154,11 @@ export async function uploadFile(file: File): Promise<{ url: string }> {
     body: formData,
   })
   if (res.status === 401) {
+    // Access token likely expired — try a one-time refresh, then replay once.
+    if (!retried && getRefreshToken()) {
+      const refreshed = await tryRefreshAdminTokens()
+      if (refreshed) return uploadFile(file, true)
+    }
     handleUnauthorized()
     throw new Error('Unauthorized')
   }

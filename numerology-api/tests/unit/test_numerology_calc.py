@@ -100,21 +100,23 @@ class TestNumerologyCalcMasterNumbers:
 
 
 class TestNumerologyCalcPersonalMonth:
-    """Số tháng cá nhân — Số năm cá nhân removed from output (internal only).
+    """Số năm cá nhân + Số tháng cá nhân.
 
-    so_thang_ca_nhan = reduce(internal_personal_year + current_month),
-    internal_personal_year = reduce(reduce(current_year) + so_thai_do).
+    so_nam_ca_nhan = reduce(reduce(current_year) + so_thai_do)  (exposed, G2).
+    so_thang_ca_nhan = reduce(so_nam_ca_nhan + current_month).
     """
 
-    def test_so_nam_ca_nhan_removed(self):
+    def test_so_nam_ca_nhan_exposed(self):
         result = calculate_numerology_numbers("15101990", "Nguyen A")
-        assert "so_nam_ca_nhan" not in result
+        now = datetime.now()
+        expected = get_sum(get_sum(now.year) + result["so_thai_do"]) or 9
+        assert result["so_nam_ca_nhan"] == expected
+        assert 1 <= result["so_nam_ca_nhan"] <= 9
 
     def test_personal_month_formula(self):
         result = calculate_numerology_numbers("15101990", "Nguyen A")
         now = datetime.now()
-        internal_year = get_sum(get_sum(now.year) + result["so_thai_do"]) or 9
-        expected = get_sum(internal_year + now.month)
+        expected = get_sum(result["so_nam_ca_nhan"] + now.month)
         assert result["so_thang_ca_nhan"] == expected
         assert 1 <= result["so_thang_ca_nhan"] <= 9
 

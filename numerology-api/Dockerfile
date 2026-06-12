@@ -1,6 +1,9 @@
 FROM python:3.12-slim-bookworm
 
-# System deps: WeasyPrint (Pango/Cairo/gdk-pixbuf) + Vietnamese/CJK fonts
+# System deps: WeasyPrint (Pango/Cairo/gdk-pixbuf) + Vietnamese/CJK fonts.
+# (Emoji come from the bundled monochrome Noto Emoji @font-face in
+# templates/reports/_fonts.css — the colour-emoji apt font renders as garbled
+# specks in WeasyPrint, so it is intentionally NOT installed here.)
 RUN apt-get update && apt-get install -y --no-install-recommends \
         curl \
         wget \

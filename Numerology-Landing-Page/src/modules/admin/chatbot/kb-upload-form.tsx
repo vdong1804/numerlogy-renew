@@ -9,14 +9,13 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
 import { toast } from '@/components/admin/admin-toast'
+import { adminFetch } from '@/lib/admin-api'
 import { cn } from '@/lib/utils'
 
 import type { KbUploadResponse } from './chatbot-types'
 
 const ACCEPT = '.pdf,.docx,.txt,.md'
 const MAX_BYTES = 100 * 1024 * 1024
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? 'http://localhost:8000'
-const TOKEN_KEY = 'admin_access_token'
 
 interface Props {
   onUploaded: (resp: KbUploadResponse) => void
@@ -52,10 +51,9 @@ export default function KbUploadForm({ onUploaded }: Props) {
       const form = new FormData()
       form.append('file', file)
       const qs = title ? `?title=${encodeURIComponent(title)}` : ''
-      const token = typeof window !== 'undefined' ? localStorage.getItem(TOKEN_KEY) : null
-      const res = await fetch(`${API_BASE}/admin/chatbot/kb/upload${qs}`, {
+      // adminFetch injects the Bearer token and refreshes-and-retries on 401.
+      const res = await adminFetch(`/admin/chatbot/kb/upload${qs}`, {
         method: 'POST',
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
         body: form,
       })
       if (!res.ok) {

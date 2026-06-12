@@ -1,7 +1,8 @@
 import axios from 'axios'
 import Cookies from 'js-cookie'
 
-import { ACCESS_TOKEN_COOKIE } from '@/lib/user-auth'
+import { tryRefreshTokens } from '@/lib/token-refresh'
+import { ACCESS_TOKEN_COOKIE, REFRESH_TOKEN_COOKIE } from '@/lib/user-auth'
 
 export const BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE ??
@@ -28,10 +29,30 @@ axiosClient.interceptors.request.use(
 
 axiosClient.interceptors.response.use(
   (response) => response,
-  (error) => {
-    const { response } = error || {}
+  async (error) => {
+    const { response, config } = error || {}
     if (response?.status === 401 && typeof window !== 'undefined') {
+      const url: string = config?.url ?? ''
+      // Access token likely expired — try a one-time refresh, then replay once.
+      if (
+        config &&
+        !config._retry &&
+        !url.includes('/auth/refresh') &&
+        Cookies.get(REFRESH_TOKEN_COOKIE)
+      ) {
+        config._retry = true
+        const refreshed = await tryRefreshTokens()
+        if (refreshed) {
+          const newToken = Cookies.get(ACCESS_TOKEN_COOKIE)
+          if (newToken) {
+            config.headers = config.headers ?? {}
+            config.headers.Authorization = `Bearer ${newToken}`
+          }
+          return axiosClient(config)
+        }
+      }
       Cookies.remove(ACCESS_TOKEN_COOKIE)
+      Cookies.remove(REFRESH_TOKEN_COOKIE)
       if (!window.location.pathname.startsWith('/login')) {
         window.location.href = '/login'
       }

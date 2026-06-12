@@ -5,6 +5,7 @@
 
 import Cookies from 'js-cookie'
 
+import { tryRefreshTokens } from './token-refresh'
 import { ACCESS_TOKEN_COOKIE, REFRESH_TOKEN_COOKIE } from './user-auth'
 
 const API_BASE =
@@ -24,7 +25,8 @@ function handleUnauthorized(): void {
 
 export async function userFetch(
   path: string,
-  init: RequestInit = {}
+  init: RequestInit = {},
+  retried = false
 ): Promise<Response> {
   const token = getToken()
   const headers: HeadersInit = {
@@ -33,6 +35,11 @@ export async function userFetch(
   }
   const res = await fetch(`${API_BASE}${path}`, { ...init, headers })
   if (res.status === 401) {
+    // Access token likely expired — try a one-time refresh, then replay once.
+    if (!retried && !path.startsWith('/auth/refresh') && Cookies.get(REFRESH_TOKEN_COOKIE)) {
+      const refreshed = await tryRefreshTokens()
+      if (refreshed) return userFetch(path, init, true)
+    }
     handleUnauthorized()
     throw new Error('Unauthorized')
   }

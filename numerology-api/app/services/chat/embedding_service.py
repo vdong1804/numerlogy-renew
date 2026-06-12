@@ -12,6 +12,7 @@ import asyncio
 import logging
 from typing import Optional
 
+import tiktoken
 from google import genai
 from google.genai import types as genai_types
 
@@ -50,10 +51,16 @@ class EmbeddingService:
         model: Optional[str] = None,
         batch_size: Optional[int] = None,
         max_retries: int = 3,
+        max_request_tokens: Optional[int] = None,
     ) -> None:
         self._model = model or settings.embedding_model
         self._batch_size = batch_size or settings.embedding_batch_size
+        self._max_request_tokens = (
+            max_request_tokens or settings.embedding_max_request_tokens
+        )
         self._max_retries = max_retries
+        # Same tokenizer the Chunker uses — only for request-budget packing.
+        self._enc = tiktoken.get_encoding("cl100k_base")
         # Defer client creation; tests inject a mock client via `_client`
         self._client: Optional[genai.Client] = None
 
@@ -77,12 +84,30 @@ class EmbeddingService:
         return vectors[0]
 
     async def embed_batch(self, texts: list[str]) -> list[list[float]]:
-        """Embed N texts; splits into request-sized chunks transparently."""
+        """Embed N texts; splits into request-sized windows transparently.
+
+        Windows are bounded by BOTH a max count (``batch_size``) and a max
+        total token count (``max_request_tokens``). The token bound is the one
+        that matters for Vertex text-embedding-004: it rejects any request
+        whose summed input tokens exceed 20000, regardless of text count.
+        """
         if not texts:
             return []
         out: list[list[float]] = []
-        for i in range(0, len(texts), self._batch_size):
-            window = texts[i : i + self._batch_size]
+        window: list[str] = []
+        window_tokens = 0
+        for text in texts:
+            tok = len(self._enc.encode(text))
+            # Flush the current window before it would breach either cap.
+            if window and (
+                len(window) >= self._batch_size
+                or window_tokens + tok > self._max_request_tokens
+            ):
+                out.extend(await self._embed_with_retry(window))
+                window, window_tokens = [], 0
+            window.append(text)
+            window_tokens += tok
+        if window:
             out.extend(await self._embed_with_retry(window))
         return out
 

@@ -85,13 +85,13 @@
 /* ── Base typography ────────────────────────────────────────────────────── */
 html { font-size: 62.5%; }
 body {
-    font-family: "Lora", "DejaVu Serif", serif;
+    font-family: "Lora", "DejaVu Serif", "Noto Emoji", serif;
     color: var(--ink);
     font-size: 1.5rem;
     line-height: 1.75;
     margin: 0;
 }
-h1, h2, h3, h4 { font-family: "Playfair Display", "DejaVu Serif", serif; color: var(--navy); line-height: 1.25; }
+h1, h2, h3, h4 { font-family: "Playfair Display", "DejaVu Serif", "Noto Emoji", serif; color: var(--navy); line-height: 1.25; }
 h2 { font-size: 2.4rem; margin: 1.2em 0 .5em; }
 h3 { font-size: 1.9rem; margin: 1em 0 .35em; color: var(--navy-soft); }
 h4 { font-size: 1.6rem; margin: .9em 0 .3em; color: var(--vermilion); }
@@ -217,12 +217,16 @@ blockquote, .content blockquote {
 .chart-timeline { width: 152mm; height: auto; }
 .chart-wheel { width: 108mm; height: auto; }
 
-/* ── Drop-cap for the opening paragraph of an interpretation section ─────── */
-/* Scoped to :first-child so sections that open with a heading/list are skipped. */
+/* ── Raised initial for the opening paragraph of an interpretation section ── */
+/* Scoped to :first-child so sections that open with a heading/list are skipped.
+   A *raised* initial (no float) is used deliberately: WeasyPrint does not
+   shorten the line that originates a floated ::first-letter, so a classic
+   dropped cap overlaps the first line of body text. Keeping the big initial on
+   the baseline avoids that while still giving the page an elegant opener. */
 .content > p:first-child::first-letter {
-    font-family: "Playfair Display", serif; font-size: 4.4rem; line-height: .8;
-    font-weight: 700; color: var(--gold); float: left;
-    padding: .4rem .8rem 0 0;
+    font-family: "Playfair Display", serif; font-size: 2.8rem; line-height: 1;
+    font-weight: 700; color: var(--gold);
+    padding-right: .3rem; vertical-align: -.15em;
 }
 
 /* ── Footer note ────────────────────────────────────────────────────────── */

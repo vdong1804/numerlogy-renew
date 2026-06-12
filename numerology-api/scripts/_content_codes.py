@@ -22,8 +22,7 @@ _BIRTHDAY_CHART = [
     "9_1", "9_2", "9_3", "9_4", "9_5",
     "1_single", "3_single", "7_single", "9_single",
     "123", "147", "159", "258", "357", "369", "456", "789",
-    "not_147", "not_159", "not_258", "not_357", "not_369", "not_456", "not_789",
-    "20  ",
+    "not_123", "not_147", "not_159", "not_258", "not_357", "not_369", "not_456", "not_789",
 ]
 
 # PhoneNumber: 2-digit zero-padded 00-99 + common 4-digit patterns

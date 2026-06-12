@@ -68,7 +68,14 @@ class Chunker:
     # -- Internals --------------------------------------------------------
 
     def _split_into_units(self, text: str) -> list[str]:
-        """Paragraph first; oversize paragraphs split into sentences."""
+        """Paragraph → sentence → hard token split.
+
+        The final hard split guarantees no unit exceeds ``max_tokens``. Without
+        it, text lacking blank lines and sentence terminators (e.g. PDF tables
+        or numeric charts) would survive as one oversize unit and later be
+        emitted as a chunk that blows past the embedding model's per-input
+        token cap.
+        """
         units: list[str] = []
         for para in _PARA_SPLIT.split(text):
             para = para.strip()
@@ -76,12 +83,27 @@ class Chunker:
                 continue
             if self.count_tokens(para) <= self.max_tokens:
                 units.append(para)
-            else:
-                for sent in _SENT_SPLIT.split(para):
-                    sent = sent.strip()
-                    if sent:
-                        units.append(sent)
+                continue
+            for sent in _SENT_SPLIT.split(para):
+                sent = sent.strip()
+                if not sent:
+                    continue
+                if self.count_tokens(sent) <= self.max_tokens:
+                    units.append(sent)
+                else:
+                    units.extend(self._hard_split(sent))
         return units
+
+    def _hard_split(self, text: str) -> list[str]:
+        """Slice text into ≤ max_tokens pieces at the raw-token level.
+
+        Last-resort splitter for units with no paragraph/sentence boundaries.
+        """
+        ids = self._enc.encode(text)
+        return [
+            self._enc.decode(ids[i : i + self.max_tokens])
+            for i in range(0, len(ids), self.max_tokens)
+        ]
 
     def _pack(self, units: list[str]) -> list[str]:
         windows: list[str] = []

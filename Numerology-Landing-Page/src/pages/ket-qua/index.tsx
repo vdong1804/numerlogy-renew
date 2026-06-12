@@ -1,5 +1,6 @@
-import { Box, Container } from '@mui/material'
+import { Alert, Box, Button, Container, Snackbar } from '@mui/material'
 import dayjs from 'dayjs'
+import { useRouter } from 'next/router'
 import type { ReactElement } from 'react'
 import { useMemo, useState } from 'react'
 import useSWR from 'swr'
@@ -28,7 +29,11 @@ import type { MainstreamNumberParams } from '../api/numerologyApi'
 import numerologyApi from '../api/numerologyApi'
 
 const SearchResultPage: NextPageWithLayout = () => {
+  const router = useRouter()
   const [isLoadingPDF, setIsLoadingPDF] = useState(false)
+  // After a successful download we nudge the user to ask the AI assistant
+  // follow-up questions about their report.
+  const [showChatSuggest, setShowChatSuggest] = useState(false)
   const { customerInfo } = useStore((state) => ({
     customerInfo: state.customerInfo,
   }))
@@ -61,6 +66,18 @@ const SearchResultPage: NextPageWithLayout = () => {
     [customerInfo, report, isPaid]
   )
 
+  // Open the AI chat pre-loaded with this report's context (name, birthday,
+  // main number) so the assistant knows which report the user is asking about.
+  const goToChat = () => {
+    setShowChatSuggest(false)
+    const facts: string[] = []
+    if (userInfo.mainNumber) facts.push(`số chủ đạo ${userInfo.mainNumber}`)
+    if (userInfo.birthday) facts.push(`ngày sinh ${userInfo.birthday}`)
+    const detail = facts.length ? ` (${facts.join(', ')})` : ''
+    const prefill = `Tôi vừa xem báo cáo thần số học của ${userInfo.name}${detail}. Bạn hãy giải thích chi tiết và tư vấn giúp tôi dựa trên các chỉ số này nhé.`
+    router.push({ pathname: '/chat', query: { prefill } })
+  }
+
   const handleDownloadPDF = async () => {
     setIsLoadingPDF(true)
     try {
@@ -87,6 +104,8 @@ const SearchResultPage: NextPageWithLayout = () => {
       link.click()
       link.remove()
       URL.revokeObjectURL(fileURL)
+      // Report is in hand — invite the user to chat with the AI assistant.
+      setShowChatSuggest(true)
     } catch (error) {
       // eslint-disable-next-line no-console
       console.log(error)
@@ -115,13 +134,44 @@ const SearchResultPage: NextPageWithLayout = () => {
                 powerChart={report.power_chart}
                 missingNumbers={report.missing_numbers}
               />
-              <BoxExportPDF isPaid={isPaid} onClick={handleDownloadPDF} />
+              <BoxExportPDF
+                isPaid={isPaid}
+                onClick={handleDownloadPDF}
+                onChatClick={goToChat}
+              />
             </Box>
           )}
         </Container>
       </Box>
       {/* Free viewers get a sticky deep-link to unlock the full report. */}
       {report && !isPaid && <StickyPurchaseBar />}
+
+      {/* Post-download nudge: hỏi đáp với Trợ lý AI về báo cáo vừa tải. */}
+      <Snackbar
+        open={showChatSuggest}
+        autoHideDuration={12000}
+        onClose={() => setShowChatSuggest(false)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert
+          severity="success"
+          variant="filled"
+          onClose={() => setShowChatSuggest(false)}
+          action={
+            <Button
+              color="inherit"
+              size="small"
+              variant="outlined"
+              onClick={goToChat}
+            >
+              Chat với AI
+            </Button>
+          }
+        >
+          Đã tải báo cáo! Trò chuyện với Trợ lý AI để được giải đáp chi tiết về
+          các chỉ số của bạn.
+        </Alert>
+      </Snackbar>
     </Box>
   )
 }

@@ -12,7 +12,7 @@ import { AdminThemeProvider } from '@/components/admin/admin-theme-provider'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { getJson, setAdminToken } from '@/lib/admin-api'
+import { clearAdminToken, getJson, setAdminTokens } from '@/lib/admin-api'
 import type { AdminUser } from '@/lib/admin-auth'
 
 interface LoginForm {
@@ -53,11 +53,11 @@ export default function AdminLoginPage() {
         throw new Error(msg)
       }
       const token = (await res.json()) as TokenResponse
-      setAdminToken(token.access_token)
+      setAdminTokens(token.access_token, token.refresh_token)
 
       const me = await getJson<AdminUser>('/auth/me')
       if (!me.is_superuser) {
-        localStorage.removeItem('admin_access_token')
+        clearAdminToken()
         throw new Error('Tài khoản không có quyền admin')
       }
       router.replace('/admin')

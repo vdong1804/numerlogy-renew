@@ -26,6 +26,7 @@ from statistics import mode
 from typing import Optional
 
 from app.core.alphabet import alphabet, strip_accents
+from app.core.numerology_chart import derive_chart_fields
 from app.core.numerology_sums import get_sum, get_sum_new, get_sum_spec
 
 # Re-export sum helpers so callers can do: from app.core.numerology import get_sum
@@ -87,8 +88,8 @@ def calculate_numerology_numbers(
     # Số năm cá nhân (= reduce(số năm thế giới + số thái độ)) is kept ONLY as
     # an internal intermediate for số tháng cá nhân — it is no longer exposed.
     now = datetime.now()
-    _so_nam_ca_nhan = get_sum(get_sum(now.year) + so_thai_do) or 9
-    so_thang_ca_nhan = get_sum(_so_nam_ca_nhan + now.month)
+    so_nam_ca_nhan = get_sum(get_sum(now.year) + so_thai_do) or 9
+    so_thang_ca_nhan = get_sum(so_nam_ca_nhan + now.month)
 
     # ── 4 challenges (N16:N19), redirect 0 → 9 ──────────────────────────
     thu_thach_1 = get_sum(get_sum(get_sum(abs(so_ngay_sinh - so_thang_sinh))))  # K16 = |N4-N5|
@@ -155,6 +156,12 @@ def calculate_numerology_numbers(
     present = set(birth_day) | set(text_name) | core_digits
     leak_num = [n for n in range(1, 10) if str(n) not in present]
 
+    # ── Birth/name-chart report fields (G1-G6): arrows, isolated, karmic debt… ──
+    chart_fields = derive_chart_fields(
+        birth_day, text_name, day_sum + month_sum + year_sum,
+        sum_full_name, sum_full_vowel, sum_full_consonant,
+    )
+
     return {
         'so_chu_dao': so_chu_dao, 'so_ngay_sinh': so_ngay_sinh,
         'so_thang_sinh': so_thang_sinh, 'so_nam_sinh': so_nam_sinh,
@@ -164,6 +171,7 @@ def calculate_numerology_numbers(
         'age': age, 'dinh_cao_1': dinh_cao_1, 'dinh_cao_2': dinh_cao_2,
         'dinh_cao_3': dinh_cao_3, 'dinh_cao_4': dinh_cao_4,
         'stages': stages, 'tuoi_dinh_cao': tuoi_dinh_cao,
+        'so_nam_ca_nhan': so_nam_ca_nhan,
         'so_thang_ca_nhan': so_thang_ca_nhan,
         'thu_thach_1': thu_thach_1, 'thu_thach_2': thu_thach_2,
         'thu_thach_3': thu_thach_3, 'thu_thach_4': thu_thach_4,
@@ -172,4 +180,6 @@ def calculate_numerology_numbers(
         'so_nhan_cach': so_nhan_cach, 'so_phat_trien': so_phat_trien,
         'so_truong_thanh': so_truong_thanh, 'so_noi_cam': so_noi_cam,
         'text_name': text_name, 'the_nhan_dang': the_nhan_dang, 'leak_num': leak_num,
+        # ── New fields (report-gap G1-G6): arrows, isolated, karmic debt, compound ──
+        **chart_fields,
     }

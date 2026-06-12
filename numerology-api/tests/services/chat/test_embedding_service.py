@@ -103,6 +103,34 @@ async def test_exhausted_retries_raises(monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_embed_batch_splits_by_token_budget():
+    # Regression: Vertex caps total tokens per request (20000). Even when the
+    # count cap is not reached, embed_batch must flush a window before its
+    # summed tokens exceed max_request_tokens.
+    client = MagicMock()
+    captured: list[int] = []
+
+    def _side_effect(*_args, **kwargs):
+        texts = kwargs["contents"]
+        captured.append(len(texts))
+        return _mock_resp([[float(i)] for i in range(len(texts))])
+
+    client.models.embed_content.side_effect = _side_effect
+
+    # High count cap so only the token budget can split the batch.
+    svc = EmbeddingService(batch_size=1000, max_request_tokens=20)
+    svc._client = client
+
+    # Each text is ~11 tokens → at most one fits in a 20-token window.
+    texts = ["word " * 10 for _ in range(5)]
+    out = await svc.embed_batch(texts)
+
+    assert len(out) == 5  # every text embedded, order preserved
+    assert client.models.embed_content.call_count >= 3  # token cap forced splits
+    assert all(n <= 2 for n in captured)  # no window breached the token budget
+
+
+@pytest.mark.asyncio
 async def test_empty_input_returns_empty_list():
     client = MagicMock()
     svc = _make_service(client)

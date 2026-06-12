@@ -5,7 +5,8 @@
  */
 
 import { Menu, Sparkles } from 'lucide-react'
-import { useCallback, useRef, useState } from 'react'
+import { useRouter } from 'next/router'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 
 import { Sheet, SheetContent } from '@/components/ui/sheet'
@@ -28,6 +29,7 @@ import UpsellModal from './parts/UpsellModal'
 
 export default function ChatLayout() {
   const { user } = useUserAuth()
+  const router = useRouter()
   const [activeConvId, setActiveConvId] = useState<number | null>(null)
   const [inputText, setInputText] = useState('')
   const [activeCitation, setActiveCitation] = useState<Citation | null>(null)
@@ -48,6 +50,23 @@ export default function ChatLayout() {
     remove,
   } = useConversations()
   const { messages, loading: msgsLoading, append } = useMessages(activeConvId)
+
+  // Deep-link from /ket-qua: ?prefill=<question> opens a fresh conversation
+  // with the report context pre-filled into the input. Runs once; the query is
+  // stripped afterwards so a refresh doesn't re-trigger it.
+  const prefillAppliedRef = useRef(false)
+  useEffect(() => {
+    if (!router.isReady || prefillAppliedRef.current) return
+    const { prefill } = router.query
+    if (typeof prefill !== 'string' || !prefill.trim()) return
+    prefillAppliedRef.current = true
+    void (async () => {
+      const conv = await create()
+      setActiveConvId(conv.id)
+      setInputText(prefill)
+      router.replace('/chat', undefined, { shallow: true })
+    })()
+  }, [router, create])
   const {
     attachment,
     uploading,

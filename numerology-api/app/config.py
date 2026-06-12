@@ -93,6 +93,12 @@ class Settings(BaseSettings):
     deepseek_chat_model: str = "deepseek-chat"
     # Embedding batch & chunking
     embedding_batch_size: int = 100
+    # Vertex text-embedding-004 caps total tokens per request at 20000 (summed
+    # across all texts in the batch). We budget windows using tiktoken (cl100k),
+    # but Gemini's tokenizer counts Vietnamese (diacritics) + numeric content
+    # ~1.5–2x heavier than cl100k. Budget in cl100k tokens with a wide margin:
+    # 8000 cl100k ≈ 12000–16000 Gemini tokens, safely under the 20000 cap.
+    embedding_max_request_tokens: int = 8000
     chunk_max_tokens: int = 500
     chunk_overlap_tokens: int = 50
     # Chat quota (Phase 05)

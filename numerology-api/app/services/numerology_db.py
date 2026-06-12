@@ -14,9 +14,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.models.numerology_content import (
     AttitudeNumber, BirthdayChart, BirthdayNumber,
     ChallengeLife, DevelopmentNumber, Identifiable,
-    IntrospectiveNumber, KarmicNumber, LifePeak, MainNumber, MatureNumber,
-    MissNumber, MissionNumber, PersonalMonthNumber,
-    PhoneNumber, SoulsNumber, StagesOfLife,
+    IntrospectiveNumber, KarmicDebtNumber, KarmicNumber, LifePeak, MainNumber,
+    MatureNumber, MissNumber, MissionNumber, NameChart, PersonalMonthNumber,
+    PersonalYearNumber, PhoneNumber, SoulsNumber, StagesOfLife,
 )
 
 
@@ -65,7 +65,14 @@ async def get_numerology_models(db: AsyncSession, calc: dict) -> dict:
         'mature_number': await fetch_by_code(db, MatureNumber, calc['so_nhan_cach']),
         'souls_number': await fetch_by_code(db, SoulsNumber, calc['so_linh_hon']),
         'personal_month_number': await fetch_by_code(db, PersonalMonthNumber, calc['so_thang_ca_nhan']),
+        'personal_year_number': await fetch_by_code(db, PersonalYearNumber, calc['so_nam_ca_nhan']),
         'miss_number': miss_rows,
+        # Report-gap additions (G1/G3)
+        'karmic_debt': await fetch_many_by_codes(db, KarmicDebtNumber, calc['no_nghiep']),
+        'name_chart': await fetch_many_by_codes(
+            db, NameChart,
+            [d for d in range(1, 10) if calc['name_counts'][str(d)]],
+        ),
     }
 
 

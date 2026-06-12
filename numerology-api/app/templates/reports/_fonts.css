@@ -18,3 +18,11 @@
 @font-face { font-family:'Playfair Display'; font-style:normal; font-weight:800; src:url(static/fonts/Playfair.ttf) format('truetype'); }
 @font-face { font-family:'Playfair Display'; font-style:normal; font-weight:900; src:url(static/fonts/Playfair.ttf) format('truetype'); }
 @font-face { font-family:'Playfair Display'; font-style:italic; font-weight:400; src:url(static/fonts/Playfair-Italic.ttf) format('truetype'); }
+
+/* ── Noto Emoji (monochrome) — fallback for emoji code points in DB content.
+   WeasyPrint can't render colour-bitmap emoji (NotoColorEmoji draws as tiny
+   garbled specks), so the black vector build is bundled instead; its glyphs
+   inherit the surrounding text colour. Listed last in the font-family chains
+   (_theme.css) so it only catches glyphs the text fonts lack. ───────────────── */
+@font-face { font-family:'Noto Emoji'; font-style:normal; font-weight:400; src:url(static/fonts/NotoEmoji.ttf) format('truetype'); }
+@font-face { font-family:'Noto Emoji'; font-style:normal; font-weight:700; src:url(static/fonts/NotoEmoji.ttf) format('truetype'); }

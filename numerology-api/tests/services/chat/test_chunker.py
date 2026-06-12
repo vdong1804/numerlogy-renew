@@ -49,3 +49,26 @@ def test_oversize_paragraph_splits_into_sentences():
     chunks = Chunker(max_tokens=30, overlap_tokens=0).chunk(para)
     assert len(chunks) >= 2
     assert all(c.token_count <= 60 for c in chunks)
+
+
+def test_blob_without_boundaries_is_hard_split():
+    # No blank lines, no sentence terminators (e.g. a PDF table/numeric chart):
+    # paragraph + sentence splitting can't help, so the chunker must hard-split
+    # at the token level. Every chunk must stay within max_tokens.
+    blob = "word " * 5000  # ~5000 tokens, one run, no '.', '!', '?'
+    max_tokens = 100
+    chunks = Chunker(max_tokens=max_tokens, overlap_tokens=0).chunk(blob)
+    assert len(chunks) >= 2
+    assert all(c.token_count <= max_tokens for c in chunks)
+
+
+def test_no_chunk_exceeds_embedding_input_cap():
+    # Regression: a single giant unit must never be emitted whole — it would
+    # blow past the embedding model's per-input token limit (the 400 bug).
+    blob = "1234567890" * 4000  # large run with no usable boundaries
+    chunker = Chunker(max_tokens=500, overlap_tokens=50)
+    # window (≤max_tokens) + prepended overlap (≤overlap_tokens); +16 tolerance
+    # for tokenizer drift when the overlap tail is re-encoded at the join.
+    cap = chunker.max_tokens + chunker.overlap_tokens + 16
+    for c in chunker.chunk(blob):
+        assert c.token_count <= cap
