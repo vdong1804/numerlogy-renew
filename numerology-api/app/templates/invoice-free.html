@@ -47,8 +47,11 @@
     {{ m.birth_chart_svg(report.chart_grid) }}
 </section>
 
-{# ── Biểu đồ vũ trụ (4 chart) ─────────────────────────────────────────── #}
-{{ m.chart_pages(report.charts) }}
+{# ── Biểu đồ vũ trụ (bản free: chỉ sức mạnh + chu kỳ; radar/timeline để bản đầy đủ) #}
+{% if report.charts %}
+{{ m.chart_block("Biểu đồ sức mạnh", "Tần suất các con số trong tên và ngày sinh", report.charts.power) }}
+{{ m.chart_block("Vòng chu kỳ 9 năm", "Năm cá nhân hiện tại của bạn", report.charts.wheel) }}
+{% endif %}
 
 {# ── Teaser sections (subset) ────────────────────────────────────────── #}
 {% for sec in report.sections %}
