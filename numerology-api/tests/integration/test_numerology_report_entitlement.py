@@ -5,6 +5,7 @@ from datetime import datetime, timedelta, timezone
 import pytest
 
 from app.db.models.order import Order, OrderItem
+from app.db.models.package import Package, UserPackage
 from app.db.models.product import Product
 
 _URL = "/api/numerology-report"
@@ -56,4 +57,26 @@ class TestReportEntitlementEndpoint:
         body = res.json()
         assert body["tier"] == "paid"
         assert body["matched_order_id"] is not None
+        assert body["pdf_source"] == "order"
+        assert "locked" not in body["data"]["core_numbers"]["su_menh"]
+
+    async def test_premium_package_unlocks_any_lookup(
+        self, client, db_session, user, auth_headers
+    ):
+        pkg = Package(name="Premium", price=99000, price_sale=99000, number_download=14)
+        db_session.add(pkg)
+        await db_session.flush()
+        db_session.add(UserPackage(user_id=user.id, package_id=pkg.id, is_used=True))
+        await db_session.commit()
+        # A name the user never purchased a report for — premium covers it.
+        res = await client.get(
+            _URL,
+            params={"full_name": "Khac Ten", "birth_day": "02021992", "phone": "0900000000"},
+            headers=auth_headers,
+        )
+        assert res.status_code == 200
+        body = res.json()
+        assert body["tier"] == "paid"
+        assert body["pdf_source"] == "quota"
+        assert body["matched_order_id"] is None
         assert "locked" not in body["data"]["core_numbers"]["su_menh"]

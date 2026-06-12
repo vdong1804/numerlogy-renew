@@ -105,6 +105,14 @@ export interface NumerologyReport {
 export type ReportTier = 'free' | 'paid'
 
 /**
+ * Where the /ket-qua PDF download should come from:
+ *  - 'free'  → public reduced PDF (/api/so-hoc-free)
+ *  - 'quota' → premium subscriber, full PDF via quota endpoint (/api/so-hoc)
+ *  - 'order' → per-report purchase, the fulfilled UserReport (report_download_id)
+ */
+export type ReportPdfSource = 'free' | 'quota' | 'order'
+
+/**
  * GET /api/numerology-report response envelope. Extends the report payload with
  * the resolved entitlement so the UI can drive upsell + PDF flows.
  */
@@ -115,6 +123,8 @@ export interface NumerologyReportResponse {
   unlocked: string[]
   /** The paid order that unlocked this report, when tier === 'paid'. */
   matched_order_id: number | null
-  /** UserReport id of the fulfilled PDF for paid viewers (download target). */
+  /** UserReport id of the fulfilled PDF for 'order' viewers (download target). */
   report_download_id: number | null
+  /** Which download path the PDF button should use. */
+  pdf_source: ReportPdfSource
 }

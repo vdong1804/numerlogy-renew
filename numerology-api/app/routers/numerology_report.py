@@ -52,11 +52,12 @@ async def numerology_report(
     except ValueError as exc:
         raise HTTPException(400, str(exc))
 
-    tier, unlocked, matched_order_id = await resolve_entitlement(
+    tier, unlocked, matched_order_id, pdf_source = await resolve_entitlement(
         db, user, full_name, birth_day
     )
-    # Paid viewers get the download id of their already-fulfilled PDF (if any) so
-    # the UI can link to GET /api/my/reports/{id}/download.
+    # Per-report purchases ("order") get the download id of their fulfilled PDF so
+    # the UI can link to GET /api/my/reports/{id}/download. Premium subscribers
+    # ("quota") download the full PDF via /api/so-hoc instead.
     report_download_id = (
         await find_order_report_download_id(db, matched_order_id)
         if matched_order_id is not None
@@ -70,4 +71,5 @@ async def numerology_report(
         "unlocked": sorted(unlocked),
         "matched_order_id": matched_order_id,
         "report_download_id": report_download_id,
+        "pdf_source": pdf_source,
     }

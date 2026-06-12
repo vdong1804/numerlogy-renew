@@ -64,11 +64,17 @@ const SearchResultPage: NextPageWithLayout = () => {
   const handleDownloadPDF = async () => {
     setIsLoadingPDF(true)
     try {
-      // Paid → the full fulfilled report (owner-only). Free → the reduced
-      // invoice-free PDF (public). The legacy /api/so-hoc quota path is gone.
+      // Pick the download path the backend resolved:
+      //  - 'order'  → the fulfilled UserReport PDF (per-report purchase)
+      //  - 'quota'  → premium subscriber, full PDF via the quota endpoint
+      //  - 'free'   → public reduced PDF
       let blob: Blob
-      if (isPaid && reportRes?.report_download_id) {
+      const pdfSource = reportRes?.pdf_source
+      if (pdfSource === 'order' && reportRes?.report_download_id) {
         blob = await downloadReportBlob(reportRes.report_download_id)
+      } else if (pdfSource === 'quota') {
+        const buffer = await numerologyApi.getMainstreamPDF(params)
+        blob = new Blob([buffer], { type: 'application/pdf' })
       } else {
         const buffer = await numerologyApi.getFreePDF(params)
         blob = new Blob([buffer], { type: 'application/pdf' })
